@@ -24,6 +24,7 @@ This is a production‑ready Laravel 12 application with a modern Filament 4 adm
 - [Testing Tutorial (Step-by-step)](#testing-tutorial-step-by-step)
 - [How to Test Cloaker](#how-to-test-cloaker)
 - [Deployment (SiteGround SSH + GitHub)](#deployment-siteground-ssh--github)
+ - [Deployment (Namecheap cPanel + GitHub, public_html)](#deployment-namecheap-cpanel--github-public_html)
 - [Troubleshooting](#troubleshooting)
 - [Changelog](#changelog)
 - [License](#license)
@@ -394,89 +395,60 @@ UI consistency:
 - The notice flag uses the same CSS sprite family as the phone widget: `<span class="iti__flag iti__{iso}"></span>`.
 
 
-## Deployment (SiteGround SSH + GitHub)
+## Deployment (Namecheap cPanel + GitHub, public_html)
 
-Use SiteGround SSH to deploy directly from GitHub. SiteGround SSH guide: https://world.siteground.com/tutorials/ssh/putty/
+This project is set up to work on Namecheap shared hosting where you cannot change the document root. We will clone directly into `public_html` and use a root `.htaccess` to forward traffic to `public/`.
 
-1) Prepare SSH and repo access
-- Generate or use an SSH key in SiteGround → Site Tools → Devs → SSH Keys Manager.
-- Add the public key to GitHub (either as a repository Deploy key or on your GitHub account) so you can use the SSH clone URL.
+1) Enable SSH and add your GitHub key
+- In Namecheap cPanel: enable SSH and generate an SSH key (or upload your existing public key).
+- Add that public key to GitHub (Deploy key on the repo, or to your GitHub account) so you can use the SSH clone URL.
 
-2) Choose your layout
-- Option A — Recommended (secure): keep the repo outside `public_html` and point your domain to the app's `public/`
-  - Pros: app files are outside web root; least risk of exposing `.env`.
-  - How:
-    - Clone to `~/apps/trading-site` (or similar)
-    - Point the domain's document root to `~/apps/trading-site/public` (Site Tools → Domain → Document Root), or symlink `public_html` to that `public/`.
-- Option B — Quick (works but less secure): clone directly into `public_html` and rewrite everything to `/public`
-  - Pros: simplest when you cannot change document root.
-  - Cons: the full Laravel repo lives in web root; rely on .htaccess to route only through `public/` and block sensitive files.
-
-3) Clone from GitHub (SSH)
+2) First-time deploy (clone into public_html)
 ```bash
-# SSH into SiteGround (see tutorial link above)
+# SSH into your Namecheap account
 ssh USER@SERVER
 
-# Option A: outside public_html (recommended)
-mkdir -p ~/apps && cd ~/apps
-git clone --depth 1 git@github.com:RonaldAllanRivera/trading-site.git
-cd trading-site
+cd ~/public_html
+git clone --depth 1 git@github.com:YOUR_USER/YOUR_REPO.git .
 
-# Option B: directly into public_html (quick)
-cd ~/www/ARTWORKDOMAIN.COM/public_html
-git clone --depth 1 git@github.com:RonaldAllanRivera/trading-site.git .
-```
-
-Quick start for artworkwebsite.com (Option B)
-```bash
-# 1) SSH into the server
-ssh USER@SERVER
-
-# 2) Backup current site (optional)
-cd ~/www/artworkwebsite.com/
-mv public_html public_html.backup_$(date +%s)
-mkdir -p public_html && cd public_html
-
-# 3) Clone your GitHub repo directly into public_html
-git clone --depth 1 git@github.com:RonaldAllanRivera/trading-site.git .
-
-# 4) Environment
+# Environment
 cp .env.example .env
-sed -i 's|APP_URL=.*|APP_URL=https://artworkwebsite.com|' .env
+sed -i 's|APP_URL=.*|APP_URL=https://YOUR_DOMAIN|' .env   # adjust for your domain
 nano .env   # set DB_*, MAIL_*, etc.
 
-# 5) Install & optimize
+# Install & optimize
 composer install --no-dev --optimize-autoloader
 php artisan key:generate --force
 php artisan storage:link
 php artisan migrate --force --seed   # remove --seed if not desired
 php artisan optimize
 
-# 6) Ensure root .htaccess exists to forward to /public and block sensitive files
-test -f .htaccess && echo "Root .htaccess found" || echo "See README for a sample .htaccess to create here"
+# Ensure root .htaccess forwards to /public and blocks sensitive files
+test -f .htaccess && echo "Root .htaccess found" || echo "Create .htaccess from README sample below"
 ```
 
-4) Configure environment
+3) Subsequent updates (pull latest changes)
 ```bash
-cp .env.example .env
-# Edit .env and set APP_URL, DB_* credentials, MAIL_*, etc.
-nano .env
-```
-
-5) Install dependencies and build cache
-```bash
+ssh USER@SERVER
+cd ~/public_html
+git pull --rebase
 composer install --no-dev --optimize-autoloader
-php artisan key:generate --force
-php artisan storage:link
-php artisan migrate --force --seed   # remove --seed if not desired
+php artisan migrate --force
 php artisan optimize
 ```
 
-6) Web server docroot
-- Option A (recommended): set document root to the app `public/`.
-- Option B (if cloning into `public_html`): ensure an `.htaccess` in `public_html` rewrites to `/public` and blocks sensitive files.
+4) Optional: cPanel Git Version Control (push-to-deploy)
+- Create a cPanel repository (bare or working copy) under your home directory.
+- It will show a remote like: `ssh://USER@SERVER:PORT/home/USER/repositories/your-repo.git`
+- Add it as a remote locally and push:
+```bash
+git remote add namecheap ssh://USER@SERVER:PORT/home/USER/repositories/your-repo.git
+git push -u namecheap main
+```
+- Use cPanel’s Deploy button or a post-receive hook to update `public_html`.
 
-Example `.htaccess` for Option B (Apache 2.4):
+5) Root `.htaccess` (required when cloning into public_html)
+Example:
 ```apache
 <IfModule mod_rewrite.c>
   RewriteEngine On
