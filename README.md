@@ -139,6 +139,8 @@ Open http://traderai.live.test in your browser.
   - Leads: list with search, status badge/filter, and CSV export.
   - Users: list/create/edit with `is_admin` toggle and optional password update.
   - Pixels: list/create/edit pixel snippets with provider, location, status, and notes.
+  - Cloaker: manage whitelist/blacklist rules with presets and counters.
+  - Delete actions enabled across all resources (row Delete + Bulk Delete).
   - Cloaker: create rules (whitelist/blacklist) with match types (ip/country/ua/referrer/param), metrics, admin tester with presets and run-on-route buttons.
   - Access control: only users with `is_admin = true` can access `/admin`; non-admins are redirected to `/dashboard`.
   - Admin login includes a “Forgot your password?” link.
@@ -550,6 +552,12 @@ php artisan optimize
   - Generate SSH key on server, add to GitHub Deploy keys, and test with `ssh -T git@github.com`.
 - HTTP 500 after deploy
   - Check `storage/logs/laravel.log`; verify `.env` DB credentials; ensure `.htaccess` rewrites to `/public`.
+
+- Filament delete action classes not found
+  - Ensure Filament v4 subpackages are installed and autoloaded:
+    - `composer require filament/tables:^4 filament/actions:^4 filament/forms:^4 filament/support:^4`
+  - In v4, row/bulk actions come from `Filament\\Actions`, not `Filament\\Tables\\Actions`.
+  - Clear caches: `composer dump-autoload -o && php artisan optimize:clear`.
 
 ## Changelog
 

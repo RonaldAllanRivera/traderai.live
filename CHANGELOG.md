@@ -14,9 +14,13 @@
 
 ### Fixed
 - Chrome flag rendering in the registration notice by switching from emoji to the `iti__{iso}` CSS sprite.
+- Filament v4 actions namespace: switched row/bulk delete to `Filament\\Actions` to resolve class-not-found errors.
 
 ### Removed
 - `geo_debug` overlay and console traces; testing is visual-only (no overlay and no console logs).
+
+### Admin
+- Delete actions enabled across all Filament resources (Leads, Pixels, Cloaker Rules, Users): row Delete and Bulk Delete.
 
 ## [0.3.4] - 2025-09-14
 

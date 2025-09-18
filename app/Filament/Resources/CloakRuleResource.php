@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\CloakRuleResource\Pages;
 use App\Models\CloakRule;
+use Filament\Actions;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -123,9 +124,13 @@ class CloakRuleResource extends Resource
                     'param' => 'Param',
                 ]),
             ])
-            ->actions([])
+            ->actions([
+                Actions\DeleteAction::make(),
+            ])
             ->recordUrl(fn ($record) => static::getUrl('edit', ['record' => $record]))
-            ->bulkActions([]);
+            ->bulkActions([
+                Actions\DeleteBulkAction::make(),
+            ]);
     }
 
     public static function getPages(): array

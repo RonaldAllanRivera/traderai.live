@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\LeadResource\Pages;
 use App\Models\Lead;
+use Filament\Actions;
 use Filament\Forms;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
@@ -85,9 +86,13 @@ class LeadResource extends Resource
                         'converted' => 'Converted',
                     ]),
             ])
-            ->actions([])
+            ->actions([
+                Actions\DeleteAction::make(),
+            ])
             ->recordUrl(fn ($record) => static::getUrl('edit', ['record' => $record]))
-            ->bulkActions([]);
+            ->bulkActions([
+                Actions\DeleteBulkAction::make(),
+            ]);
     }
 
     public static function getPages(): array

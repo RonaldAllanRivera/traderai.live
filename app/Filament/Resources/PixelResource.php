@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\PixelResource\Pages;
 use App\Models\Pixel;
+use Filament\Actions;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -100,9 +101,13 @@ class PixelResource extends Resource
                         'paused' => 'Paused',
                     ]),
             ])
-            ->actions([])
+            ->actions([
+                Actions\DeleteAction::make(),
+            ])
             ->recordUrl(fn ($record) => static::getUrl('edit', ['record' => $record]))
-            ->bulkActions([]);
+            ->bulkActions([
+                Actions\DeleteBulkAction::make(),
+            ]);
     }
 
     public static function getPages(): array

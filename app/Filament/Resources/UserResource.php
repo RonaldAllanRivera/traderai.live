@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
 use App\Models\User;
+use Filament\Actions;
 use Filament\Forms;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
@@ -68,9 +69,13 @@ class UserResource extends Resource
                     ->label('Admin')
                     ->options(['1' => 'Yes', '0' => 'No']),
             ])
-            ->actions([])
+            ->actions([
+                Actions\DeleteAction::make(),
+            ])
             ->recordUrl(fn ($record) => static::getUrl('edit', ['record' => $record]))
-            ->bulkActions([]);
+            ->bulkActions([
+                Actions\DeleteBulkAction::make(),
+            ]);
     }
 
     public static function getPages(): array
