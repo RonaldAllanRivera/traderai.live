@@ -7,8 +7,14 @@ use App\Http\Controllers\PasswordController;
 
 // Public landing pages
 Route::match(['GET', 'HEAD'], '/', function () {
-    return view('landing.home');
+    return view('traderai-template.home');
 })->name('home')->middleware(\App\Http\Middleware\CloakerMiddleware::class);
+
+// Preserve landing-page form action (index.php) by handling it server-side (no CSRF token in static form)
+Route::match(['GET', 'POST'], '/traderai-template/index.php', function () {
+    return redirect()->to(route('home') . '#req-form-section');
+})->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
+
 Route::view('/privacy', 'landing.privacy')->name('privacy');
 Route::view('/terms', 'landing.terms')->name('terms');
 Route::view('/cookie', 'landing.cookie')->name('cookie');
