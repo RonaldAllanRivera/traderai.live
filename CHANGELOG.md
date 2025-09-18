@@ -22,6 +22,11 @@
 ### Admin
 - Delete actions enabled across all Filament resources (Leads, Pixels, Cloaker Rules, Users): row Delete and Bulk Delete.
 
+### Public UX
+- Added lightweight client-side validation on the homepage signup form:
+  - Email regex with debounced live checks (200ms) and green check icons.
+  - Phone validation intentionally lenient (accepts 6–14 digits) to maximize conversions; inline errors shown on blur/submit.
+
 ## [0.3.4] - 2025-09-14
 
 ### Fixed

@@ -131,6 +131,9 @@ Open http://traderai.live.test in your browser.
   - Frictionless password UX: simple passwords allowed, a one-click generator, show/hide toggle, and a tooltip.
   - Public login/logout with `/login` and `POST /logout`.
   - Password reset (forgot/reset) and change password pages.
+  - Client-side validation on sign-up (plain JS, no Inertia):
+    - Email regex with debounced live checks (200ms) and green check icons.
+    - Phone is deliberately lenient for conversions (accepts 6–14 digits). Inline errors on blur/submit only.
 
 - Dashboard
   - Minimal dashboard at `/dashboard` under the landing layout.

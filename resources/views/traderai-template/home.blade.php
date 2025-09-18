@@ -194,6 +194,9 @@
             <div data-error-status="inactive" data-for-error="phone">
              Please enter a valid phone number.
             </div>
+            <span data-check-icon="inactive" data-check-icon-for="phone">
+             <img alt="✔" loading="lazy" src="img/check-icon.png"/>
+            </span>
            </div>
           </div>
           <p>
@@ -831,6 +834,83 @@ for (var e = 0; e < document.getElementsByClassName("fbclid").length; e++)
     window.traderaiSetGeoTest = function (iso2, callingCode) {
       whenPhoneUiReady(function(){ applyGeo(iso2, callingCode); enforce(iso2, callingCode); });
     };
+   })();
+  </script>
+  <script>
+   // Lightweight client-side validation for Email and Phone
+   (function(){
+     var form = document.querySelector('form.form-registration');
+     if (!form) return;
+
+     var el = {
+       email: form.querySelector('input[name="email"]'),
+       phone: form.querySelector('input[name="phone"]'),
+       area: form.querySelector('input[name="area_code"]'),
+       alert: form.querySelector('.alert.alert-danger'),
+     };
+
+     function showAlert(msg){ if(!el.alert) return; el.alert.textContent = msg; el.alert.classList.remove('hidden'); el.alert.setAttribute('role','alert'); }
+     function hideAlert(){ if(!el.alert) return; el.alert.textContent = ''; el.alert.classList.add('hidden'); }
+
+     function setCheckIcon(name, active){
+       var c = form.querySelector('[data-check-icon-for="'+name+'"]');
+       if (c){ c.setAttribute('data-check-icon', active ? 'active' : 'inactive'); }
+     }
+
+     function setError(name, message){
+       var eEl = form.querySelector('[data-for-error="'+name+'"]');
+       if (eEl){ eEl.setAttribute('data-error-status','active'); eEl.style.display='block'; if(message){ eEl.textContent = message; } }
+       setCheckIcon(name, false);
+     }
+
+     function clearError(name){
+       var eEl = form.querySelector('[data-for-error="'+name+'"]');
+       if (eEl){ eEl.setAttribute('data-error-status','inactive'); eEl.style.display='none'; }
+       setCheckIcon(name, true);
+     }
+
+     // Debounce helper to throttle while typing
+     function debounce(fn, wait){
+       var t; return function(){ var args = arguments, ctx = this; clearTimeout(t); t = setTimeout(function(){ fn.apply(ctx, args); }, wait); };
+     }
+
+     function validateEmail(opts){
+       var silent = opts && opts.silent;
+       if(!el.email) return true;
+       var v = (el.email.value||'').trim();
+       var ok = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+       if (ok) { clearError('email'); }
+       else { if (silent) setCheckIcon('email', false); else setError('email','Please enter a valid email address.'); }
+       return ok;
+     }
+
+     function validatePhone(opts){
+       var silent = opts && opts.silent;
+       if(!el.phone) return true;
+       var v = String(el.phone.value||'');
+       var digits = v.replace(/\D/g,'');
+       var ok = digits.length >= 6 && digits.length <= 14;
+       if (ok) { clearError('phone'); }
+       else { if (silent) setCheckIcon('phone', false); else setError('phone','Please enter a valid phone number.'); }
+       return ok;
+     }
+
+     el.email && el.email.addEventListener('blur', function(){ hideAlert(); validateEmail({silent:false}); });
+     el.phone && el.phone.addEventListener('blur', function(){ hideAlert(); validatePhone({silent:false}); });
+
+     // Throttled validation while typing (no alert, no red messages)
+     el.email && el.email.addEventListener('input', debounce(function(){ validateEmail({silent:true}); }, 200));
+     el.phone && el.phone.addEventListener('input', debounce(function(){ validatePhone({silent:true}); }, 200));
+
+     form.addEventListener('submit', function(ev){
+       hideAlert();
+       var okE = validateEmail({silent:false});
+        var okP = validatePhone({silent:false});
+       if (!(okE && okP)) {
+         ev.preventDefault();
+         showAlert(!okE ? 'Invalid email address.' : 'Invalid phone number.');
+       }
+     });
    })();
   </script>
   </body>
