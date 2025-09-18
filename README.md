@@ -25,6 +25,7 @@ This is a production‑ready Laravel 12 application with a modern Filament 4 adm
 - [How to Test Cloaker](#how-to-test-cloaker)
 - [Deployment (SiteGround SSH + GitHub)](#deployment-siteground-ssh--github)
 - [Troubleshooting](#troubleshooting)
+- [Changelog](#changelog)
 - [License](#license)
 
 ## Tech Stack
@@ -150,6 +151,14 @@ Open http://traderai.live.test in your browser.
 - Developer Experience
   - Clear route map, environment/bootstrap steps, and testing tutorial.
   - CSV export endpoint streams in chunks for memory efficiency.
+
+- Geo & Phone Auto-Country
+  - Cloaker-driven overrides: `?__country=US` or `?geo=US` propagate to the homepage.
+  - Hidden `area_code` is pre-seeded server-side based on ISO (e.g., US → `1`).
+  - Phone widget flag/dial auto-syncs via `intl-tel-input` (with fallbacks to vanilla/jQuery API or manual DOM patching).
+  - Robust enforcement loop (10s) to survive late widget initialization.
+  - Dynamic notice under the phone field: “Currently only [flag sprite] [Country Name] Nationals can register.”
+  - Middleware preserves overrides on redirect: `CloakerMiddleware` keeps `__country`, `geo`, `__ua`, `__ref`, and common UTM params when redirecting to offer/safe.
 
 ## Public Landing Pages
 
@@ -349,10 +358,31 @@ The cloaker is active on `/` and `/sign-up` via `App\Http\Middleware\CloakerMidd
 
 - Quick toggle
   - You can disable the cloaker globally by adding `CLOAKING_ENABLED=false` in `.env` and (optionally) referencing it in `config/app.php`:
-    ```php
-    // config/app.php
-    'cloaking_enabled' => env('CLOAKING_ENABLED', true),
-    ```
+  ```php
+  // config/app.php
+  'cloaking_enabled' => env('CLOAKING_ENABLED', true),
+  ```
+
+### Geo & Phone Override Test
+
+1) From Filament → Marketing → `Cloaker` → `Test Cloaker`, choose a country and click “Run on route /”.
+2) Expected on `/` (`resources/views/traderai-template/home.blade.php`):
+   - The phone input shows the corresponding flag and dial (e.g., `+1` for US) within ~0–2 seconds (enforced up to 10s).
+   - The notice under the phone field reads: “Currently only [flag sprite] [Country Name] Nationals can register.”
+3) Try switching to SG/PH/GB. The flag (CSS sprite) and dial update accordingly; hidden `area_code` pre-seeds server-side.
+4) If a cloaker redirect occurs, the override is preserved by middleware so the view receives it.
+
+Advanced notes:
+- Overrides honored: `__country` (ISO2) and `geo` (ISO2). If absent, `meta[name="isoCode"]` fallback is used, else IP lookup.
+- The phone widget integration tries `intlTelInputGlobals`, then `window.intlTelInput`, then `jQuery.fn.intlTelInput`, and finally a DOM fallback.
+- Enforcement re-applies desired state for up to 10 seconds to cover late mounting.
+
+Troubleshooting:
+- Hard refresh with DevTools open if assets are cached.
+
+UI consistency:
+- The notice flag uses the same CSS sprite family as the phone widget: `<span class="iti__flag iti__{iso}"></span>`.
+
 
 ## Deployment (SiteGround SSH + GitHub)
 
@@ -488,7 +518,7 @@ rm -rf .git
 
 # Initialize and attach your GitHub repo
 git init
-git remote add origin git@github.com:RonaldAllanRivera/trading-site.git
+git remote add origin https://github.com/RonaldAllanRivera/traderai.live.git
 git fetch --depth 1 origin main
 git reset --hard origin/main
 
@@ -520,6 +550,16 @@ php artisan optimize
   - Generate SSH key on server, add to GitHub Deploy keys, and test with `ssh -T git@github.com`.
 - HTTP 500 after deploy
   - Check `storage/logs/laravel.log`; verify `.env` DB credentials; ensure `.htaccess` rewrites to `/public`.
+
+## Changelog
+
+### 2025-09-18
+- Cloaker middleware now preserves query params (`__country`, `geo`, `geo_debug`, `__ua`, `__ref`, `utm_*`, `gclid`, `fbclid`) when redirecting to offer/safe.
+- Homepage geo/phone integration:
+  - Server-side meta `isoCode` and hidden `area_code` pre-seeded from `__country|geo` (default `PH`).
+  - Client-side phone flag/dial sync with robust fallbacks and 10s enforcement.
+  - `geo_debug=1` green overlay (server-rendered) for quick verification.
+  - Dynamic registration notice wired to the same override, using the CSS sprite flag for Chrome-safe rendering.
 
 ## License
 

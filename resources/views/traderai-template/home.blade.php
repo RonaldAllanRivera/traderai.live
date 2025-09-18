@@ -3,7 +3,7 @@
  <head>
   <base href="{{ asset('traderai-template/') }}/">
   <link href="css/video-js.css" rel="stylesheet"/>
-  <meta content="PH" name="isoCode"/>
+  <meta content="{{ strtoupper(request('__country', request('geo', 'PH'))) }}" name="isoCode"/>
   <meta charset="utf-8"/>
   <meta content="IE=edge" http-equiv="X-UA-Compatible"/>
   <title>
@@ -118,6 +118,31 @@
          You are allowed to submit a form only once in 24 hours.
         </div>
         <div class="home-form-inner">
+        @php
+          $iso = strtoupper(request('__country', request('geo', 'PH')));
+          $dialMap = ['PH'=>'63','SG'=>'65','US'=>'1','GB'=>'44','AE'=>'971','IN'=>'91'];
+          $preDial = $dialMap[$iso] ?? '63';
+          // Country names for the notice
+          $countryNames = [
+            'PH' => 'Philippines',
+            'US' => 'United States',
+            'SG' => 'Singapore',
+            'GB' => 'United Kingdom',
+            'AE' => 'United Arab Emirates',
+            'IN' => 'India',
+          ];
+          $countryName = $countryNames[$iso] ?? $iso;
+          // Reliable emoji flag mapping for common countries (avoids mb/encoding issues in some PHP builds)
+          $emojiMap = [
+            'PH' => '🇵🇭',
+            'US' => '🇺🇸',
+            'SG' => '🇸🇬',
+            'GB' => '🇬🇧',
+            'AE' => '🇦🇪',
+            'IN' => '🇮🇳',
+          ];
+          $flagEmoji = $emojiMap[$iso] ?? '';
+        @endphp
          <form action="index.php#req-form-section" class="form-registration" data-id="form-registration" method="post" style="display: '';">
           <div class="bspace-30">
            <div class="alert alert-danger hidden" role="alert">
@@ -164,7 +189,7 @@
             </span>
            </div>
            <div class="form-group">
-            <input class="area_code" name="area_code" required="" type="hidden"/>
+            <input class="area_code" name="area_code" required="" type="hidden" value="{{ $preDial }}"/>
             <input class="phone" name="phone" required="" type="number" value=""/>
             <div data-error-status="inactive" data-for-error="phone">
              Please enter a valid phone number.
@@ -173,10 +198,7 @@
           </div>
           <p>
            <b>
-            Currently only
-            <img height="25" src="img/ph_64.png" width="40">
-             Philippines Nationals can register.
-            </img>
+            Currently only <span class="iti__flag iti__{{ strtolower($iso) }}" style="display:inline-block;width:20px;height:15px;margin-right:6px;vertical-align:-2px;"></span> {{ $countryName }} Nationals can register.
            </b>
           </p>
           <div class="form-group text-center">
@@ -691,20 +713,30 @@ for (var e = 0; e < document.getElementsByClassName("fbclid").length; e++)
        debugLog('applyGeo', 'iso=', iso, 'dial=', dial);
 
        // If intl-tel-input is used, set the flag/country via its API
-       try {
-         if (window.intlTelInputGlobals && typeof window.intlTelInputGlobals.getInstance === 'function') {
-           var iti = window.intlTelInputGlobals.getInstance(phoneInput);
-           if (iti && iso) {
-             iti.setCountry(iso.toLowerCase());
-             debugLog('applyGeo', 'iti.setCountry', iso.toLowerCase());
-           }
-         } else {
-           // Fallback: manually patch the UI if plugin API is not available
-           manualUiUpdate(iso, dial);
-         }
-       } catch (e) {
-         manualUiUpdate(iso, dial);
-       }
+      try {
+        if (window.intlTelInputGlobals && typeof window.intlTelInputGlobals.getInstance === 'function') {
+          var iti = window.intlTelInputGlobals.getInstance(phoneInput);
+          if (iti && iso) {
+            iti.setCountry(iso.toLowerCase());
+            debugLog('applyGeo', 'iti.setCountry', iso.toLowerCase());
+          }
+        } else if (typeof window.intlTelInput === 'function') {
+          // Initialize/obtain instance via vanilla API
+          var iti2;
+          try { iti2 = window.intlTelInput(phoneInput, { initialCountry: iso ? iso.toLowerCase() : undefined, separateDialCode: true }); } catch(e){}
+          if (iti2 && iti2.setCountry && iso) {
+            iti2.setCountry(iso.toLowerCase());
+            debugLog('applyGeo', 'intlTelInput() init+setCountry', iso.toLowerCase());
+          }
+        } else if (window.jQuery && jQuery.fn && typeof jQuery.fn.intlTelInput === 'function') {
+          try { jQuery(phoneInput).intlTelInput('setCountry', iso.toLowerCase()); debugLog('applyGeo', 'jQuery.intlTelInput setCountry', iso.toLowerCase()); } catch(e){}
+        } else {
+          // Fallback: manually patch the UI if plugin API is not available
+          manualUiUpdate(iso, dial);
+        }
+      } catch (e) {
+        manualUiUpdate(iso, dial);
+      }
 
        // Always set hidden area_code if we have a calling code
        if (areaInput && dial) {
@@ -719,7 +751,7 @@ for (var e = 0; e < document.getElementsByClassName("fbclid").length; e++)
        var dial = callingCode || (iso && DIAL_MAP[iso]) || null;
        var elapsed = 0;
        var step = 100;
-       var max = 3000; // 3s
+       var max = 10000; // 10s
        var t = setInterval(function(){
          var currentDial = (document.querySelector('.iti__selected-dial-code')||{}).textContent || '';
          var needDial = dial ? ('+'+String(dial)) : null;
@@ -771,29 +803,34 @@ for (var e = 0; e < document.getElementsByClassName("fbclid").length; e++)
      }
 
      // URL overrides: ?__country=PH (from Admin Cloaker) or ?geo=PH
-     var params = new URLSearchParams(window.location.search);
-     var debug = (function(v){ if(!v) return false; v=String(v).toLowerCase(); return v==='1'||v==='true'||v==='yes'; })(params.get('geo_debug'));
-     function debugLog(){ if(!debug) return; try{ console.log.apply(console, ['[geo]'].concat([].slice.call(arguments))); var box = document.getElementById('geo-debug-box'); if(!box){ box=document.createElement('div'); box.id='geo-debug-box'; box.style.cssText='position:fixed;bottom:8px;right:8px;z-index:99999;background:#111;color:#0f0;font:12px/1.4 monospace;padding:8px 10px;border-radius:6px;opacity:0.9;max-width:50vw;max-height:40vh;overflow:auto;box-shadow:0 2px 8px rgba(0,0,0,.4)'; document.body.appendChild(box);} var line=document.createElement('div'); line.textContent=[].slice.call(arguments).map(function(a){try{return typeof a==='string'?a:JSON.stringify(a);}catch(e){return String(a)}}).join(' '); box.appendChild(line);}catch(e){} }
-     var overrideIso = params.get('__country') || params.get('geo');
-     debugLog('overrideIso', overrideIso);
+    var params = new URLSearchParams(window.location.search);
+    function debugLog(){ /* debug disabled */ }
+    var overrideIso = params.get('__country') || params.get('geo');
+    debugLog('overrideIso', overrideIso);
      if (overrideIso) {
-       whenPhoneUiReady(function(){
-         var isoUp = String(overrideIso).toUpperCase();
-         var dial = DIAL_MAP[isoUp] || null;
-         applyGeo(isoUp, dial);
-         enforce(isoUp, dial);
-       });
-     } else {
-       whenPhoneUiReady(function(){
-         fetchGeoAndApply();
-       });
-     }
+      whenPhoneUiReady(function(){
+        var isoUp = String(overrideIso).toUpperCase();
+        var dial = DIAL_MAP[isoUp] || null;
+        applyGeo(isoUp, dial);
+        enforce(isoUp, dial);
+      });
+    } else {
+      whenPhoneUiReady(function(){
+        var metaEl = document.querySelector('meta[name="isoCode"]');
+        var metaIso = metaEl && metaEl.getAttribute('content');
+        if (metaIso) {
+          applyGeo(metaIso, DIAL_MAP[String(metaIso).toUpperCase()] || null);
+          enforce(metaIso, DIAL_MAP[String(metaIso).toUpperCase()] || null);
+        } else {
+          fetchGeoAndApply();
+        }
+      });
+    }
 
-     // Expose a simple test hook in the console
-     window.traderaiSetGeoTest = function (iso2, callingCode) {
-       whenPhoneUiReady(function(){ applyGeo(iso2, callingCode); enforce(iso2, callingCode); });
-       console.log('[geo-test] applied', iso2, callingCode);
-     };
+     // Expose a simple test hook (logs removed)
+    window.traderaiSetGeoTest = function (iso2, callingCode) {
+      whenPhoneUiReady(function(){ applyGeo(iso2, callingCode); enforce(iso2, callingCode); });
+    };
    })();
   </script>
   </body>

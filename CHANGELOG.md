@@ -1,3 +1,23 @@
+## [0.3.5] - 2025-09-18
+
+### Added
+- Cloaker middleware now preserves query params (`__country`, `geo`, `geo_debug`, `__ua`, `__ref`, `utm_*`, `gclid`, `fbclid`) when redirecting to offer/safe.
+- Homepage geo/phone integration:
+  - Server-side `meta[name="isoCode"]` and hidden `area_code` pre-seeded from `__country|geo` (default `PH`).
+  - Client-side phone flag/dial sync with robust fallbacks (intl-tel-input globals/vanilla/jQuery) and 10s enforcement.
+  - `geo_debug=1` green overlay (server-rendered) for quick verification.
+  - Dynamic registration notice wired to the same override, using CSS sprite flag for Chrome-safe rendering.
+- Documentation updates in README:
+  - New “Geo & Phone Auto-Country” feature section.
+  - New “Geo & Phone Override Test (no console)” steps in How to Test Cloaker.
+  - Added Changelog section and ToC entry.
+
+### Fixed
+- Chrome flag rendering in the registration notice by switching from emoji to the `iti__{iso}` CSS sprite.
+
+### Removed
+- `geo_debug` overlay and console traces; testing is visual-only (no overlay and no console logs).
+
 ## [0.3.4] - 2025-09-14
 
 ### Fixed

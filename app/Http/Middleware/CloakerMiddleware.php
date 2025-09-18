@@ -95,6 +95,14 @@ class CloakerMiddleware
             $safeUrl = $rule->safe_url ?: (route('safe'));
             $offerUrl = $rule->offer_url ?: (route('home'));
 
+            // Preserve testing/marketing query params on redirect (so __country/utm reach the view)
+            $preserveKeys = ['__country','geo','geo_debug','__ua','__ref','utm_source','utm_medium','utm_campaign','utm_term','utm_content','gclid','fbclid'];
+            $preserve = array_intersect_key($query, array_flip($preserveKeys));
+            if (!empty($preserve)) {
+                $safeUrl = $this->appendQueryParams($safeUrl, $preserve);
+                $offerUrl = $this->appendQueryParams($offerUrl, $preserve);
+            }
+
             // Normalize current request URI (path + query) and destination URIs to avoid redirect loops
             $currentUri = $request->getRequestUri(); // includes path + query, e.g. "/?utm=..."
             $normalize = function (string $url): string {
@@ -128,5 +136,24 @@ class CloakerMiddleware
         }
 
         return $next($request);
+    }
+
+    /**
+     * Append/merge the given query params to the target URL.
+     */
+    private function appendQueryParams(string $url, array $params): string
+    {
+        if (empty($params)) {
+            return $url;
+        }
+        $base = preg_replace('/\?.*$/', '', $url);
+        $existingQuery = parse_url($url, PHP_URL_QUERY);
+        $existing = [];
+        if ($existingQuery) {
+            parse_str($existingQuery, $existing);
+        }
+        $merged = array_merge($existing, $params);
+        $qs = http_build_query($merged);
+        return $base . ($qs ? ('?' . $qs) : '');
     }
 }
