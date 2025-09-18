@@ -7,6 +7,10 @@
   - Client-side phone flag/dial sync with robust fallbacks (intl-tel-input globals/vanilla/jQuery) and 10s enforcement.
   - `geo_debug=1` green overlay (server-rendered) for quick verification.
   - Dynamic registration notice wired to the same override, using CSS sprite flag for Chrome-safe rendering.
+- Lead Capture Settings (Admin → System → Lead Capture):
+  - Toggle to auto-login user after signup (default OFF in this repo).
+  - Configurable external redirect URL when auto-login is disabled (default `https://www.vantage-traders.net/`).
+  - Backed by Spatie Laravel Settings; base `settings` table migration added.
 - Documentation updates in README:
   - New “Geo & Phone Auto-Country” feature section.
   - New “Geo & Phone Override Test (no console)” steps in How to Test Cloaker.
@@ -26,6 +30,7 @@
 - Added lightweight client-side validation on the homepage signup form:
   - Email regex with debounced live checks (200ms) and green check icons.
   - Phone validation intentionally lenient (accepts 6–14 digits) to maximize conversions; inline errors shown on blur/submit.
+- Input invalid state updated from tomato to brand-friendly amber (`#ffcc33`).
 
 ## [0.3.4] - 2025-09-14
 

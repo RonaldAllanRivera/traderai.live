@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Lead;
 use App\Models\User;
+use App\Settings\LeadCaptureSettings;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -58,10 +59,17 @@ class LeadsController extends Controller
             $user->save();
         }
 
-        // Log the user in and redirect to dashboard
-        Auth::login($user);
+        // Determine post-signup behavior from settings
+        /** @var LeadCaptureSettings $settings */
+        $settings = app(LeadCaptureSettings::class);
 
-        return redirect()->route('dashboard')->with('success', 'Thanks! Your account was created and you are now signed in.');
+        if ($settings->auto_login_after_signup ?? false) {
+            Auth::login($user);
+            return redirect()->route('dashboard')->with('success', 'Thanks! Your account was created and you are now signed in.');
+        }
+
+        $target = $settings->redirect_url_when_auto_login_disabled ?: 'https://www.vantage-traders.net/';
+        return redirect()->away($target);
     }
 
     public function exportCsv(): StreamedResponse

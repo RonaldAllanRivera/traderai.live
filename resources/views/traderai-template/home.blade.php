@@ -143,7 +143,8 @@
           ];
           $flagEmoji = $emojiMap[$iso] ?? '';
         @endphp
-         <form action="index.php#req-form-section" class="form-registration" data-id="form-registration" method="post" style="display: '';">
+         <form action="{{ route('leads.store') }}" class="form-registration" data-id="form-registration" method="post" style="display: '';">
+          @csrf
           <div class="bspace-30">
            <div class="alert alert-danger hidden" role="alert">
            </div>
@@ -154,7 +155,7 @@
            <div class="row">
             <div class="col-md-6">
              <div class="form-group">
-              <input name="f_name" placeholder="First Name" required="" type="text" value=""/>
+              <input name="first_name" placeholder="First Name" required="" type="text" value=""/>
               <div data-error-status="inactive" data-for-error="first_name">
                Your first name is too short (at least 2 characters)
               </div>
@@ -165,7 +166,7 @@
             </div>
             <div class="col-md-6">
              <div class="form-group">
-              <input name="l_name" placeholder="Last Name" required="" type="text" value=""/>
+              <input name="last_name" placeholder="Last Name" required="" type="text" value=""/>
               <div data-error-status="inactive" data-for-error="last_name">
                Your last name is too short (at least 2 characters)
               </div>
@@ -189,8 +190,9 @@
             </span>
            </div>
            <div class="form-group">
-            <input class="area_code" name="area_code" required="" type="hidden" value="{{ $preDial }}"/>
-            <input class="phone" name="phone" required="" type="number" value=""/>
+            <input class="area_code" name="phone_prefix" required="" type="hidden" value="{{ $preDial }}"/>
+            <input name="country" type="hidden" value="{{ $iso }}"/>
+            <input class="phone" name="phone_number" required="" type="number" value=""/>
             <div data-error-status="inactive" data-for-error="phone">
              Please enter a valid phone number.
             </div>
@@ -631,7 +633,7 @@
    </script>
    <script src="js/jquery-3.5.1.min.js" type="text/javascript">
    </script>
-   <script>
+  <script>
     // Countdown
     function startTimer(duration, display) {
         var timer = duration, minutes, seconds;
@@ -844,8 +846,8 @@ for (var e = 0; e < document.getElementsByClassName("fbclid").length; e++)
 
      var el = {
        email: form.querySelector('input[name="email"]'),
-       phone: form.querySelector('input[name="phone"]'),
-       area: form.querySelector('input[name="area_code"]'),
+       phone: form.querySelector('input[name="phone_number"]'),
+       area: form.querySelector('input[name="phone_prefix"]'),
        alert: form.querySelector('.alert.alert-danger'),
      };
 

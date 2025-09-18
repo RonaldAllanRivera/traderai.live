@@ -134,6 +134,9 @@ Open http://traderai.live.test in your browser.
   - Client-side validation on sign-up (plain JS, no Inertia):
     - Email regex with debounced live checks (200ms) and green check icons.
     - Phone is deliberately lenient for conversions (accepts 6–14 digits). Inline errors on blur/submit only.
+  - Lead Capture Settings (Admin → System → Lead Capture):
+    - Toggle: Auto-login user after signup (OFF by default in this repo).
+    - When OFF: redirect to configurable external URL (default `https://www.vantage-traders.net/`).
 
 - Dashboard
   - Minimal dashboard at `/dashboard` under the landing layout.
@@ -199,7 +202,9 @@ Routes are declared in `routes/web.php`.
 
 ## Authentication & Dashboard (Public)
 
-- Signup form posts to `POST /leads` and creates both a `Lead` and a `User`, then logs the user in and redirects to `/dashboard`.
+- Signup form posts to `POST /leads` and creates both a `Lead` and a `User`, then either:
+  - Logs the user in and redirects to `/dashboard` (when Auto‑login is enabled), or
+  - Redirects to the configured external URL (when Auto‑login is disabled; default is `https://www.vantage-traders.net/`).
 - Login form posts to `POST /login`, logout posts to `POST /logout`.
 - Authenticated users see a small header banner with “Hello, {name}” and a “Go to Dashboard” button.
 - Top and mobile menus are auth-aware (hide Sign Up, switch Login→Logout when authenticated).

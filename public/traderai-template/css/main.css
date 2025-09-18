@@ -5662,6 +5662,6 @@ form .form-group input:not([type=checkbox]).valid {
 }
 
 form .form-group input:not([type=checkbox]).invalid {
-    background-color: tomato;
-    border: 1px solid tomato;
+    background-color: #ffcc33;
+    border: 1px solid #ffcc33;
 }
