@@ -1,3 +1,14 @@
+## [0.3.8] - 2025-09-19
+
+### Added
+- Admin-controlled public template selection via Filament settings page (System → Appearance).
+- `App\\Settings\\SiteAppearanceSettings` with `public_template` and DB seeding migration.
+- `config/templates.php` registry to whitelist available templates and default.
+- `App\\Http\\Controllers\\PublicPagesController` to resolve the active template and render `home`, `safe`, and `redirect` dynamically.
+
+### Changed
+- `routes/web.php`: `/`, `/safe`, and `/redirect` now point to `PublicPagesController` for dynamic template resolution; generalized `/{template}/index.php` redirect to support future templates.
+
 ## [0.3.7] - 2025-09-19
 
 ### Changed

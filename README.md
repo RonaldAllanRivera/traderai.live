@@ -177,10 +177,13 @@ Open http://traderai.live.test in your browser.
 
 The public site now serves only TraderAI template pages. Legacy public landing/auth pages were removed.
 
-- TraderAI template pages
+- TraderAI template pages (dynamic)
   - `resources/views/traderai-template/home.blade.php` → `/`
   - `resources/views/traderai-template/safe.blade.php` → `/safe`
   - `resources/views/traderai-template/redirect.blade.php` → `/redirect`
+  - Active template is selected in Admin → System → Appearance (Filament), stored in `SiteAppearanceSettings.public_template`.
+  - The controller `App\\Http\\Controllers\\PublicPagesController` resolves the current template and renders `"{template}.home"`, `"{template}.safe"`, and `"{template}.redirect"`.
+  - Template registry lives in `config/templates.php` to whitelist available template folders and labels.
 
 - Lead submission
   - `POST /leads` handled by `App\Http\Controllers\LeadsController@store`
@@ -194,6 +197,95 @@ Routes are declared in `routes/web.php`.
 - Password reset is enabled via `->passwordReset()` in `app/Providers/Filament/AdminPanelProvider.php`.
 - Admin login includes a "Forgot your password?" link that opens the Filament forgot-password page.
 - Public auth routes (`/login`, `/forgot-password`, `/reset-password`, `/dashboard`) were removed.
+
+## Template Selection (Appearance)
+
+- Admin → System → Appearance provides a dropdown to choose the public template.
+- Settings class: `App\\Settings\\SiteAppearanceSettings` (`group(): 'site_appearance'`).
+- DB migration: `database/settings/2025_09_19_000002_create_site_appearance_settings.php` seeds default from `config/templates.php`.
+- After saving, the page auto-clears compiled views so the change is immediate.
+
+Add a new template
+- Create `resources/views/{slug}/home.blade.php`, `safe.blade.php`, `redirect.blade.php`.
+- Add to `config/templates.php` under `available` with a human label.
+- Select it in Admin → System → Appearance.
+
+Notes & best practices
+- Keep per-template assets under `public/templates/{slug}/` and include them inside the template blades.
+- Maintain consistent view names (home, safe, redirect) across templates to swap seamlessly.
+- Routes stay static; only the controller decides which template to render.
+
+### How to add a new template
+
+Follow this tutorial to add a new public template that can be selected from Admin → System → Appearance.
+
+1) Create the template views
+- Directory: `resources/views/{slug}/`
+- Required files:
+  - `home.blade.php`
+  - `safe.blade.php`
+  - `redirect.blade.php`
+
+Example minimal `resources/views/pro-template/home.blade.php`:
+```blade
+@php(
+  // Optional: template-local variables or includes
+  $title = 'Trader AI – Pro Template';
+)
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>{{ $title }}</title>
+    {{-- Example per-template CSS --}}
+    <link rel="stylesheet" href="/templates/pro-template/style.css">
+  </head>
+  <body>
+    <h1>Welcome to the Pro Template</h1>
+    {{-- Your sections/components here --}}
+  </body>
+  </html>
+```
+
+2) (Optional) Add per-template assets
+- Place assets under: `public/templates/{slug}/`
+- Reference them from your Blade files, e.g.:
+```html
+<link rel="stylesheet" href="/templates/pro-template/style.css">
+<script src="/templates/pro-template/app.js" defer></script>
+```
+
+3) Register the template in the registry
+- File: `config/templates.php`
+- Add an entry under `available`:
+```php
+'pro-template' => [
+    'label' => 'Pro Template',
+    'views' => ['home', 'safe', 'redirect'],
+],
+```
+
+4) Select the template in Admin
+- Go to Admin → System → Appearance.
+- Choose your new template from the dropdown and Save.
+- The page clears compiled views automatically so changes apply immediately.
+
+5) Clear caches if needed
+- If you just edited `config/templates.php`, you may need to clear config/opcache:
+```bash
+php artisan optimize:clear
+```
+
+6) Verify
+- Visit `/` → should render `resources/views/{slug}/home.blade.php`.
+- Visit `/safe` and `/redirect` → should render corresponding views from your selected template.
+
+Fallback behavior
+- If a selected template is missing one of the required views, the controller falls back to the default template defined in `config/templates.php` for that page.
+
+Tips
+- Keep view names consistent across templates (`home`, `safe`, `redirect`).
+- Avoid referencing global CSS/JS from templates; prefer per-template assets to prevent style bleed.
 
 Route notes
 - `/` (homepage) uses `resolve.country` + `CloakerMiddleware`.
