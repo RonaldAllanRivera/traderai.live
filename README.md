@@ -146,7 +146,7 @@ Open http://traderai.live.test in your browser.
 - Admin (Filament 4)
   - Leads: list with search, status badge/filter, and CSV export.
   - Users: list/create/edit with `is_admin` toggle and optional password update.
-  - Pixels: list/create/edit pixel snippets with provider, location, status, and notes.
+  - Pixels: list/create/edit pixel snippets with provider, location (`head` / `body_start` / `body_end`), status, and notes. Active pixels are injected into the homepage template by location. The safe page does not include marketing pixels by default.
   - Cloaker: manage whitelist/blacklist rules with presets and counters.
   - Delete actions enabled across all resources (row Delete + Bulk Delete).
   - Cloaker: create rules (whitelist/blacklist) with match types (ip/country/ua/referrer/param), metrics, admin tester with presets and run-on-route buttons.
@@ -204,6 +204,18 @@ The public site renders pages from `resources/views/traderai-template/` for the 
   - `resources/views/landing/pages/cookie-content.blade.php`
 
 Routes are declared in `routes/web.php`.
+
+### Pixels (Tracking)
+
+- Admin-managed via: Admin → Marketing → Pixels.
+- Each pixel has: `provider`, `status`, `location` (head, body_start, body_end), and raw `code`.
+- Injection:
+  - Homepage (`resources/views/traderai-template/home.blade.php`) renders all `status=active` pixels by their `location`.
+  - Safe page (`resources/views/traderai-template/safe.blade.php`) intentionally does NOT inject marketing pixels by default.
+- Best practices:
+  - Load vendor snippets async/defer when possible to protect Core Web Vitals.
+  - Avoid duplicate initializations per platform; centralize conversion events.
+  - Consider consent gating in regulated regions (GDPR/CCPA) before firing marketing pixels.
 
 ## Authentication & Dashboard (Public)
 

@@ -1,5 +1,8 @@
 ## [0.3.6] - 2025-09-19
 
+### Added
+- Admin-managed Pixels are now injected into the homepage by location (`head`, `body_start`, `body_end`). Safe page intentionally does not inject marketing pixels by default.
+
 ### Changed
 - Public signup now submits via AJAX and, on success, shows a centered thank‑you message under the form and redirects after ~5 seconds.
 - Redirect URL is sourced dynamically from Lead Capture settings only (no frontend hardcoded fallback).

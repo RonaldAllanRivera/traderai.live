@@ -27,8 +27,26 @@
   <style>
    *,:after,:before{box-sizing:border-box}html{font-family:sans-serif;line-height:1.15;-webkit-text-size-adjust:100%}header,section{display:block}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji;font-size:1rem;font-weight:400;line-height:1.5;text-align:left;background-color:#fff}h1,h2{margin-bottom:.5rem}h1,h2,p{margin-top:0}p{margin-bottom:1rem}ul{margin-top:0;margin-bottom:1rem}a{color:#007bff;text-decoration:none;background-color:transparent}img{vertical-align:middle;border-style:none}button{border-radius:0}button,input{margin:0;font-family:inherit;font-size:inherit;line-height:inherit}button,input{overflow:visible}button{text-transform:none}[type=submit],button{-webkit-appearance:button}[type=submit]::-moz-focus-inner,button::-moz-focus-inner{padding:0;border-style:none}::-webkit-file-upload-button{font:inherit;-webkit-appearance:button}h1,h2{margin-bottom:.5rem;font-weight:500;line-height:1.2}h1{font-size:2.5rem}h2{font-size:2rem}.container{width:100%;padding-right:15px;padding-left:15px;margin-right:auto;margin-left:auto}@media (min-width:576px){.container{max-width:540px}}@media (min-width:768px){.container{max-width:720px}}@media (min-width:992px){.container{max-width:960px}}@media (min-width:1200px){.container{max-width:1140px}}.row{display:flex;flex-wrap:wrap;margin-right:-15px;margin-left:-15px}.col-5,.col-7,.col-12,.col-lg-5,.col-lg-7,.col-md-2,.col-md-3,.col-md-4,.col-md-6,.col-md-7,.col-md-8{position:relative;width:100%;padding-right:15px;padding-left:15px}.col-5{flex:0 0 41.6666666667%;max-width:41.6666666667%}.col-7{flex:0 0 58.3333333333%;max-width:58.3333333333%}.col-12{flex:0 0 100%;max-width:100%}.order-1{order:1}.order-2{order:2}.order-3{order:3}@media (min-width:768px){.col-md-2{flex:0 0 16.6666666667%;max-width:16.6666666667%}.col-md-3{flex:0 0 25%;max-width:25%}.col-md-4{flex:0 0 33.3333333333%;max-width:33.3333333333%}.col-md-6{flex:0 0 50%;max-width:50%}.col-md-7{flex:0 0 58.3333333333%;max-width:58.3333333333%}.col-md-8{flex:0 0 66.6666666667%;max-width:66.6666666667%}.col-lg-5{flex:0 0 41.6666666667%;max-width:41.6666666667%}.col-lg-7{flex:0 0 58.3333333333%;max-width:58.3333333333%}.align-items-center{align-items:center!important}.justify-content-between{justify-content:space-between!important}.justify-content-end{justify-content:flex-end!important}.text-center{text-align:center!important}.text-md-right{text-align:right!important}.d-flex{display:flex!important}.mt-3{margin-top:1rem!important}.mt-md-4{margin-top:1.5rem!important}.mb-3{margin-bottom:1rem!important}.mb-md-5{margin-bottom:3rem!important}.pt-0{padding-top:0!important}.offset-md-3{margin-left:25%}
   </style>
+  <?php /** Pixels: head location */ ?>
+  @php
+    try {
+      $___pixels_head = \App\Models\Pixel::query()->where('status','active')->where('location','head')->orderBy('id')->get(['id','provider','code']);
+    } catch (\Throwable $e) { $___pixels_head = collect(); }
+  @endphp
+  @foreach($___pixels_head as $___px)
+    {!! $___px->code !!}
+  @endforeach
  </head>
  <body class="main-page">
+  <?php /** Pixels: body_start location */ ?>
+  @php
+    try {
+      $___pixels_body_start = \App\Models\Pixel::query()->where('status','active')->where('location','body_start')->orderBy('id')->get(['id','provider','code']);
+    } catch (\Throwable $e) { $___pixels_body_start = collect(); }
+  @endphp
+  @foreach($___pixels_body_start as $___px)
+    {!! $___px->code !!}
+  @endforeach
   <!-- INTRO SECTION 1 END -->
   <header class="header">
    <div class="top-warning">
@@ -961,5 +979,15 @@ for (var e = 0; e < document.getElementsByClassName("fbclid").length; e++)
     });
    })();
   </script>
-  </body>
- </html>
+  </script>
+  <?php /** Pixels: body_end location */ ?>
+  @php
+    try {
+      $___pixels_body_end = \App\Models\Pixel::query()->where('status','active')->where('location','body_end')->orderBy('id')->get(['id','provider','code']);
+    } catch (\Throwable $e) { $___pixels_body_end = collect(); }
+  @endphp
+  @foreach($___pixels_body_end as $___px)
+    {!! $___px->code !!}
+  @endforeach
+ </body>
+</html>
