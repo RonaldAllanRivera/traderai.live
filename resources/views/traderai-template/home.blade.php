@@ -212,6 +212,10 @@
            </button>
           </div>
          </form>
+          <div class="alert alert-success font-bold hidden" id="signup-success-message" role="alert" style="margin-top:12px; text-align:center;">
+           Thank you for sharing your information with us!<br>
+           Our team truly appreciates the time you took, and we’ll be reaching out within 48 hours to assist you further.
+          </div>
         </div>
        </div>
       </div>
@@ -905,14 +909,56 @@ for (var e = 0; e < document.getElementsByClassName("fbclid").length; e++)
      el.phone && el.phone.addEventListener('input', debounce(function(){ validatePhone({silent:true}); }, 200));
 
      form.addEventListener('submit', function(ev){
-       hideAlert();
-       var okE = validateEmail({silent:false});
-        var okP = validatePhone({silent:false});
-       if (!(okE && okP)) {
-         ev.preventDefault();
-         showAlert(!okE ? 'Invalid email address.' : 'Invalid phone number.');
-       }
-     });
+      hideAlert();
+      var okE = validateEmail({silent:false});
+      var okP = validatePhone({silent:false});
+      if (!(okE && okP)) {
+        ev.preventDefault();
+        showAlert(!okE ? 'Invalid email address.' : 'Invalid phone number.');
+        return;
+      }
+
+      // Proceed with AJAX submit for a smoother UX
+      ev.preventDefault();
+      var btn = form.querySelector('button[type="submit"]');
+      btn && (btn.disabled = true);
+
+      var successEl = document.getElementById('signup-success-message');
+      if (successEl) { successEl.classList.add('hidden'); successEl.textContent = 'Submitting…'; }
+
+      var fd = new FormData(form);
+      var token = form.querySelector('input[name="_token"]')?.value || '';
+      fetch(form.action, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': token
+        },
+        body: fd,
+        credentials: 'same-origin'
+      }).then(function(r){
+        if (!r.ok) throw new Error('Network');
+        return r.json();
+      }).then(function(data){
+        // Show success message under the form
+        if (successEl){
+          successEl.innerHTML = "Thank you for sharing your information with us!<br>Our team truly appreciates the time you took, and we’ll be reaching out within 48 hours to assist you further.";
+          successEl.style.fontWeight = '700'; // ensure bold even if .font-bold class is not defined
+          successEl.style.textAlign = 'center';
+          successEl.classList.remove('hidden');
+        }
+        // Redirect after 5 seconds ONLY if the server provided a redirect URL from settings
+        var target = data && data.redirect;
+        if (target) {
+          setTimeout(function(){ window.location.href = String(target); }, 5000);
+        }
+      }).catch(function(){
+        showAlert('Submission failed. Please try again.');
+        btn && (btn.disabled = false);
+        if (successEl){ successEl.classList.add('hidden'); }
+      });
+    });
    })();
   </script>
   </body>

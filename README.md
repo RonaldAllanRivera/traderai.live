@@ -138,6 +138,7 @@ Open http://traderai.live.test in your browser.
   - Lead Capture Settings (Admin → System → Lead Capture):
     - Toggle: Auto-login user after signup (OFF by default in this repo).
     - When OFF: redirect to configurable external URL (default `https://www.vantage-traders.net/`).
+  - Public signup UX (AJAX): On success, the form shows a centered thank-you message under the form and then redirects after ~5 seconds to the URL configured in Lead Capture Settings. The URL is read dynamically from settings (no frontend fallback).
 
 - Dashboard
   - Minimal dashboard at `/dashboard` under the landing layout.
@@ -205,7 +206,7 @@ Routes are declared in `routes/web.php`.
 
 - Signup form posts to `POST /leads` and creates both a `Lead` and a `User`, then either:
   - Logs the user in and redirects to `/dashboard` (when Auto‑login is enabled), or
-  - Redirects to the configured external URL (when Auto‑login is disabled; default is `https://www.vantage-traders.net/`).
+  - Shows a thank‑you message under the form and, after ~5 seconds, redirects to the configured external URL (when Auto‑login is disabled). The redirect URL is sourced from Admin → System → Lead Capture settings.
 - Login form posts to `POST /login`, logout posts to `POST /logout`.
 - Authenticated users see a small header banner with “Hello, {name}” and a “Go to Dashboard” button.
 - Top and mobile menus are auth-aware (hide Sign Up, switch Login→Logout when authenticated).

@@ -12,10 +12,11 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 class LeadsController extends Controller
 {
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): Response
     {
         $validated = $request->validate([
             'first_name'   => ['nullable', 'string', 'max:256'],
@@ -63,13 +64,28 @@ class LeadsController extends Controller
         /** @var LeadCaptureSettings $settings */
         $settings = app(LeadCaptureSettings::class);
 
+        // If the request is AJAX / wants JSON (fetch), return success payload with redirect URL from settings
+        $acceptsJson = ($request->ajax() || $request->wantsJson() || str_contains(strtolower((string)$request->header('Accept')), 'application/json'));
+        if ($acceptsJson) {
+            $target = $settings->redirect_url_when_auto_login_disabled; // dynamic from DB settings
+            return response()->json([
+                'status'   => 'ok',
+                'redirect' => $target,
+                'lead_id'  => $lead->id,
+            ]);
+        }
+
         if ($settings->auto_login_after_signup ?? false) {
             Auth::login($user);
             return redirect()->route('dashboard')->with('success', 'Thanks! Your account was created and you are now signed in.');
         }
 
-        $target = $settings->redirect_url_when_auto_login_disabled ?: 'https://www.vantage-traders.net/';
-        return redirect()->away($target);
+        $target = trim((string) $settings->redirect_url_when_auto_login_disabled); // dynamic from DB settings
+        if ($target !== '' && filter_var($target, FILTER_VALIDATE_URL)) {
+            return redirect()->away($target);
+        }
+        // Safe fallback if setting is empty/invalid
+        return redirect()->to('/')->with('success', 'Thanks! We have received your details.');
     }
 
     public function exportCsv(): StreamedResponse

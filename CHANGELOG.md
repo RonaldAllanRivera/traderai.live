@@ -1,3 +1,13 @@
+## [0.3.6] - 2025-09-19
+
+### Changed
+- Public signup now submits via AJAX and, on success, shows a centered thank‑you message under the form and redirects after ~5 seconds.
+- Redirect URL is sourced dynamically from Lead Capture settings only (no frontend hardcoded fallback).
+
+### Fixed
+- Controller `LeadsController@store` now reliably returns JSON for AJAX requests (`ajax()`/`wantsJson()`/`Accept` header check) to avoid fetch parsing errors.
+- Added validation and a safe fallback when the settings redirect URL is empty/invalid to prevent 500s.
+
 ## [0.3.5] - 2025-09-18
 
 ### Added
