@@ -1,14 +1,14 @@
 # The Immediate Trade Pro — Laravel 12 + Filament 4
 
-This is a production‑ready Laravel 12 application with a modern Filament 4 admin and a polished public landing experience. It demonstrates end‑to‑end onboarding (lead capture → account creation → login → dashboard), an opinionated admin suite (Leads, Pixels, Cloaker, Password), and strong developer ergonomics (seeders, factories, Postman, and deployment playbooks).
+Production‑ready Laravel 12 app with a modern Filament 4 admin and a dynamic public landing layer. Admins select the active public template from the panel; the homepage resolves geo/calling code server‑ and client‑side; leads post to the backend with an optional redirect splash. The admin suite includes Leads, Users, Pixels, Cloaker, and Settings, with strong developer ergonomics (seeders, factories, Postman, and deployment playbooks).
 
 **What stands out at a glance**
-- Full public UX: modular Blade landing pages, auth‑aware navigation, friendly password UX, and a minimal dashboard.
-- Data & CRUD depth: Leads and Users with search/filtering and a streaming CSV export designed for large datasets.
-- Growth‑ready: a Pixels manager to attach tracking snippets (FB, Google, etc.) by location and status.
-- Traffic control: rule‑based Cloaker middleware (whitelist/blacklist by IP, country, UA, referrer, param), with hit counters.
-- Admin tester: presets for common reviewers, a "Use Rule" autofill from DB, and live‑run links that simulate traffic on real routes.
-- Operational maturity: SiteGround SSH + GitHub deployment flow, env templates for production, and troubleshooting guidance.
+- Dynamic public templates: pick the active template in Admin → System → Appearance; routes remain static.
+- Leads at scale: Leads and Users with search/filtering and streaming CSV export.
+- Pixels manager: attach tracking snippets by provider, location, and status.
+- Cloaker middleware: rule‑based allow/redirect by IP, country, UA, referrer, and params; includes counters and an admin tester.
+- Geo/phone auto‑country: initial render and phone widget dial/flag synced; CDN‑safe with Vary: CF‑IPCountry.
+- Operational maturity: SSH+Git deployment flows, clear env/bootstrap, troubleshooting, and testing guides.
 
 ## Table of Contents
 
@@ -17,8 +17,8 @@ This is a production‑ready Laravel 12 application with a modern Filament 4 adm
 - [Quick Start (Local)](#quick-start-local)
 - [Laragon (Apache) Local Setup (no php artisan serve)](#laragon-apache-local-setup-no-php-artisan-serve)
 - [Features](#features)
-- [Public Landing Pages](#public-landing-pages)
-- [Authentication & Dashboard (Public)](#authentication--dashboard-public)
+- [Public Pages (Current)](#public-pages-current)
+- [Template Selection (Appearance)](#template-selection-appearance)
 - [Local Development](#local-development)
 - [Admin Notes](#admin-notes)
 - [Testing Tutorial (Step-by-step)](#testing-tutorial-step-by-step)
@@ -56,9 +56,7 @@ php artisan serve
 ```
 
 ### Key URLs
-- `http://127.0.0.1:8000/` — Home
-- `http://127.0.0.1:8000/sign-up` — Sign up
-- `http://127.0.0.1:8000/login` — Login
+- `http://127.0.0.1:8000/` — Home (dynamic template)
 - `http://127.0.0.1:8000/admin` — Filament Admin
 
 ## Laragon (Apache) Local Setup (no php artisan serve)
@@ -122,26 +120,18 @@ Open http://traderai.live.test in your browser.
 
 ## Features
 
-- Public Landing Experience
-  - Modular Blade includes with production static assets.
-  - Auth-aware header/menus: hide Sign Up and switch Login→Logout when authenticated.
-  - "Hello, {name}" banner with a “Go to Dashboard” button for signed-in users.
+- Public Landing Layer (Dynamic Templates)
+  - Admin-selectable template under Admin → System → Appearance.
+  - Routes stay static; controller renders `"{template}.home|safe|redirect"`.
+  - Production-ready static assets; per-template assets recommended under `public/templates/{slug}/`.
 
-- Lead Capture & Public Auth
-  - Signup posts to `POST /leads`, creates both a `Lead` and a `User`, then logs in and redirects to `/dashboard`.
-  - Frictionless password UX: simple passwords allowed, a one-click generator, show/hide toggle, and a tooltip.
-  - Public login/logout with `/login` and `POST /logout`.
-  - Password reset (forgot/reset) and change password pages.
-  - Client-side validation on sign-up (plain JS, no Inertia):
-    - Email regex with debounced live checks (200ms) and green check icons.
-    - Phone is deliberately lenient for conversions (accepts 6–14 digits). Inline errors on blur/submit only.
+- Lead Capture & Redirect Flow
+  - Sign-up posts to `POST /leads`; creates a `Lead` and a matching `User` if not existing.
+  - AJAX success response returns a redirect URL from settings; UX shows an inline thank-you then navigates to `/redirect` which forwards after ~5s.
   - Lead Capture Settings (Admin → System → Lead Capture):
-    - Toggle: Auto-login user after signup (OFF by default in this repo).
-    - When OFF: redirect to configurable external URL (default `https://www.vantage-traders.net/`).
-  - Public signup UX (AJAX): On success, the form shows a centered thank-you message under the form and then redirects after ~5 seconds to the URL configured in Lead Capture Settings. The URL is read dynamically from settings (no frontend fallback).
-
-- Dashboard
-  - Minimal dashboard at `/dashboard` under the landing layout.
+    - Toggle: Auto-login user after signup. Default OFF in this repo; if ON, ensure your app provides a post-login destination.
+    - When OFF: redirects to a configurable external URL (default `https://www.vantage-traders.net/`).
+  - Client-side validation kept lightweight for conversion; phone lenient (6–14 digits).
 
 - Admin (Filament 4)
   - Leads: list with search, status badge/filter, and CSV export.
@@ -303,17 +293,10 @@ Route notes
   - Avoid duplicate initializations per platform; centralize conversion events.
   - Consider consent gating in regulated regions (GDPR/CCPA) before firing marketing pixels.
 
-## Authentication & Dashboard (Public)
+## Authentication (Admin only)
 
-- Signup form posts to `POST /leads` and creates both a `Lead` and a `User`, then either:
-  - Logs the user in and redirects to `/dashboard` (when Auto‑login is enabled), or
-  - Shows a thank‑you message under the form (no timeout), then immediately navigates to `/redirect?to=<external>&s=5&lead_id=<id>` which displays a spinner/message for ~5 seconds before forwarding to the configured external URL (when Auto‑login is disabled). The redirect URL is sourced from Admin → System → Lead Capture settings. The redirect page is marked `noindex, nofollow`.
-- Login form posts to `POST /login`, logout posts to `POST /logout`.
-- Authenticated users see a small header banner with “Hello, {name}” and a “Go to Dashboard” button.
-- Top and mobile menus are auth-aware (hide Sign Up, switch Login→Logout when authenticated).
-- Password helpers on signup:
-  - “Generate passwords” button fills a simple password (e.g., `trade123`) and reveals it.
-  - Tooltip beside the password explains simple passwords are allowed.
+- Admin login and password reset are handled entirely by Filament under `/admin/*`.
+- Public login/dashboard routes have been removed in this repo to focus on a pure lead-capture → redirect flow.
 
 ## Local Development
 
@@ -367,13 +350,7 @@ php artisan serve
 ```
 Open:
 
-- `http://127.0.0.1:8000/` — Public homepage
-- `http://127.0.0.1:8000/login` — Public login page
-- `http://127.0.0.1:8000/sign-up` — Public sign-up page
-- `http://127.0.0.1:8000/dashboard` — Public dashboard (auth required)
-- `http://127.0.0.1:8000/privacy` — Privacy Policy
-- `http://127.0.0.1:8000/terms` — Terms and Conditions
-- `http://127.0.0.1:8000/cookie` — Cookie Policy
+- `http://127.0.0.1:8000/` — Public homepage (dynamic template)
 - `http://127.0.0.1:8000/admin` — Filament Admin
 
 ## Admin Notes
@@ -385,15 +362,12 @@ Open:
 - Admin login page includes a “Forgot your password?” link that uses the same reset flow as public users.
 - Roadmap: migrate to a dedicated Admin guard + model when needed.
 
-## Password Reset & Change Password
+## Admin Password Reset
 
-- Forgot password (public and admin):
-  - GET `/forgot-password` → request reset link
-  - POST `/forgot-password` → send email (configure Mail in `.env`)
-  - GET `/reset-password/{token}` → reset form
-  - POST `/reset-password` → update password
-- Change password (authenticated users):
-  - GET `/settings/password` and POST `/settings/password`
+- Admin forgot/reset pages are provided by Filament:
+  - `/admin/forgot-password` (GET/POST)
+  - `/admin/reset-password` (GET/POST)
+  - Ensure mail is configured in `.env` for reset emails.
 
 ## Seeding
 
@@ -418,7 +392,7 @@ Notes:
 
 3) Admin access (allowed only for admins)
    - Create admin via seeder or promote an existing user’s `is_admin` to true.
-   - Visit `/admin` and sign in. Non-admins are redirected to `/dashboard`.
+   - Visit `/admin` and sign in. Non-admins are redirected to `/`.
 
 4) Leads management (Filament)
    - Visit `/admin/leads` as an admin to see all leads (seeded or collected via signup form).
