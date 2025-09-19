@@ -107,7 +107,7 @@
      </div>
      <div class="col-md-6">
       <h1 class="video-subheader">
-       780$ TO 1800$ PER DAY, by using the Trader Ai platform.
+       780&pound; TO 1800&pound; PER DAY, by using the Trader Ai platform.
       </h1>
      </div>
     </div>
@@ -966,10 +966,13 @@ for (var e = 0; e < document.getElementsByClassName("fbclid").length; e++)
           successEl.style.textAlign = 'center';
           successEl.classList.remove('hidden');
         }
-        // Redirect after 5 seconds ONLY if the server provided a redirect URL from settings
+        // Go to internal redirect splash page (shows 5s) if server provided a redirect URL
         var target = data && data.redirect;
         if (target) {
-          setTimeout(function(){ window.location.href = String(target); }, 5000);
+          var splash = "{{ route('redirect') }}";
+          var leadId = data && data.lead_id ? String(data.lead_id) : '';
+          var url = splash + '?to=' + encodeURIComponent(String(target)) + '&s=5' + (leadId ? ('&lead_id=' + encodeURIComponent(leadId)) : '');
+          window.location.href = url;
         }
       }).catch(function(){
         showAlert('Submission failed. Please try again.');
@@ -978,7 +981,6 @@ for (var e = 0; e < document.getElementsByClassName("fbclid").length; e++)
       });
     });
    })();
-  </script>
   </script>
   <?php /** Pixels: body_end location */ ?>
   @php

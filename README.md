@@ -190,6 +190,7 @@ The public site renders pages from `resources/views/traderai-template/` for the 
 - TraderAI template pages
   - `resources/views/traderai-template/home.blade.php` → `/`
   - `resources/views/traderai-template/safe.blade.php` → `/safe` (Cloaker "safe" destination)
+  - `resources/views/traderai-template/redirect.blade.php` → `/redirect` (internal splash page used after signup; displays a short message & spinner and forwards after ~5s)
 - Legacy landing pages (still included for reference/legal)
   - `resources/views/landing/home.blade.php` → `/` (not used by default)
   - `resources/views/landing/login.blade.php` → `/login`
@@ -221,7 +222,7 @@ Routes are declared in `routes/web.php`.
 
 - Signup form posts to `POST /leads` and creates both a `Lead` and a `User`, then either:
   - Logs the user in and redirects to `/dashboard` (when Auto‑login is enabled), or
-  - Shows a thank‑you message under the form and, after ~5 seconds, redirects to the configured external URL (when Auto‑login is disabled). The redirect URL is sourced from Admin → System → Lead Capture settings.
+  - Shows a thank‑you message under the form (no timeout), then immediately navigates to `/redirect?to=<external>&s=5&lead_id=<id>` which displays a spinner/message for ~5 seconds before forwarding to the configured external URL (when Auto‑login is disabled). The redirect URL is sourced from Admin → System → Lead Capture settings. The redirect page is marked `noindex, nofollow`.
 - Login form posts to `POST /login`, logout posts to `POST /logout`.
 - Authenticated users see a small header banner with “Hello, {name}” and a “Go to Dashboard” button.
 - Top and mobile menus are auth-aware (hide Sign Up, switch Login→Logout when authenticated).

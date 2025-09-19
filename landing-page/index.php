@@ -89,7 +89,7 @@
      </div>
      <div class="col-md-6">
       <h1 class="video-subheader">
-       780$ TO 1800$ PER DAY, by using the Trader Ai platform.
+      780&pound; TO 1800&pound; PER DAY, by using the Trader Ai platform.
       </h1>
      </div>
     </div>

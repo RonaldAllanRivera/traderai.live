@@ -2,6 +2,7 @@
 
 ### Added
 - Admin-managed Pixels are now injected into the homepage by location (`head`, `body_start`, `body_end`). Safe page intentionally does not inject marketing pixels by default.
+- Redirect splash page (`/redirect`) shows a short message/spinner for ~5 seconds after successful signup before forwarding to the external URL; marked noindex.
 
 ### Changed
 - Public signup now submits via AJAX and, on success, shows a centered thank‑you message under the form and redirects after ~5 seconds.

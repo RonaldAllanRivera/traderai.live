@@ -19,6 +19,7 @@ Route::view('/privacy', 'landing.privacy')->name('privacy');
 Route::view('/terms', 'landing.terms')->name('terms');
 Route::view('/cookie', 'landing.cookie')->name('cookie');
 Route::view('/safe', 'traderai-template.safe')->name('safe');
+Route::view('/redirect', 'traderai-template.redirect')->name('redirect');
 Route::view('/login', 'landing.login')->name('login');
 Route::match(['GET', 'HEAD'], '/sign-up', function () {
     return view('landing.sign-up');
