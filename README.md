@@ -164,11 +164,14 @@ Open http://traderai.live.test in your browser.
 
 - Geo & Phone Auto-Country
   - Server-side resolution on homepage: `ResolveCountryMiddleware` determines the visitor ISO (priority: URL override → CDN header like `CF-IPCountry` → session → IP lookup via ipwho.is with 700ms timeout). Applied only to `/`.
+  - Client IP detection for lookup: `CF-Connecting-IP` → `True-Client-IP` → first `X-Forwarded-For` → `X-Real-IP` → `Request::ip()`.
   - Cloaker-driven overrides: `?__country=US` or `?geo=US` propagate and take precedence.
   - Initial render shows the correct flag/dial and notice. Hidden `area_code` (`phone_prefix`) and `country` inputs are pre-seeded server-side.
   - Client-side: phone widget flag/dial auto-syncs via `intl-tel-input` (with fallbacks) and re-enforcement for up to 10s to cover late mounts.
   - Dynamic notice under the phone field updates server-side and client-side: “Currently only [flag sprite] [Country Name] Nationals can register.” Country name uses `Intl.DisplayNames` with a robust fallback map (includes IL → Israel). Dial map expanded (e.g., IL → +972, BE → +32, and other common regions).
   - Middleware preserves overrides on redirect: `CloakerMiddleware` keeps `__country`, `geo`, `__ua`, `__ref`, and common UTM params when redirecting to offer/safe.
+  - CDN cache safety: homepage responses include `Vary: CF-IPCountry` when available to avoid cross-country cache bleed on Cloudflare.
+  - Session stickiness: resolved geo is cached in session for 60 seconds to balance stability and fast updates.
 
 ## Public Landing Pages
 
@@ -412,6 +415,7 @@ Advanced notes:
 
 Troubleshooting:
 - Hard refresh with DevTools open if assets are cached.
+ - If country seems “sticky”, wait 60 seconds or use `?__country=XX` override; ensure CDN honors `Vary: CF-IPCountry`.
 
 UI consistency:
 - The notice flag uses the same CSS sprite family as the phone widget: `<span class="iti__flag iti__{iso}"></span>`.

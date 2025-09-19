@@ -41,15 +41,39 @@ class ResolveCountryMiddleware
             }
         }
 
-        // 3) Session cache
+        // 3) Session cache with short TTL (60s)
         if (!$iso) {
-            $iso = session('resolved_iso');
-            $dial = session('resolved_dial');
+            $ttl = 60; // seconds
+            $ts = (int) session('resolved_geo_ts', 0);
+            if ($ts && (time() - $ts) <= $ttl) {
+                $iso = session('resolved_iso');
+                $dial = session('resolved_dial');
+            } else {
+                // stale or empty: clear
+                session()->forget(['resolved_geo_ts', 'resolved_iso', 'resolved_dial']);
+            }
         }
 
         // 4) Remote lookup as a last resort (fast timeout, swallow errors)
         if (!$iso) {
             try {
+                // Try to resolve the real client IP (behind proxies/CDN)
+                $clientIp = $request->headers->get('CF-Connecting-IP')
+                    ?: $request->headers->get('True-Client-IP');
+                if (!$clientIp) {
+                    $xff = $request->headers->get('X-Forwarded-For');
+                    if ($xff) {
+                        $parts = explode(',', $xff);
+                        $clientIp = trim($parts[0] ?? '');
+                    }
+                }
+                if (!$clientIp) {
+                    $clientIp = $request->headers->get('X-Real-IP');
+                }
+                if (!$clientIp) {
+                    $clientIp = $request->ip();
+                }
+
                 $ctx = stream_context_create([
                     'http' => [
                         'method' => 'GET',
@@ -57,7 +81,8 @@ class ResolveCountryMiddleware
                         'header' => "Accept: application/json\r\nUser-Agent: TraderAI/1.0\r\n",
                     ],
                 ]);
-                $json = @file_get_contents('https://ipwho.is/?fields=country_code,calling_code', false, $ctx);
+                $url = 'https://ipwho.is/' . rawurlencode((string) $clientIp) . '?fields=country_code,calling_code';
+                $json = @file_get_contents($url, false, $ctx);
                 if ($json) {
                     $data = @json_decode($json, true);
                     if (!empty($data['country_code'])) {
@@ -73,17 +98,27 @@ class ResolveCountryMiddleware
         }
 
         // Store in session for reuse
-        if ($iso) {
-            session(['resolved_iso' => $iso]);
-        }
-        if ($dial) {
-            session(['resolved_dial' => $dial]);
-        }
+        if ($iso) { session(['resolved_iso' => $iso]); }
+        if ($dial) { session(['resolved_dial' => $dial]); }
+        if ($iso || $dial) { session(['resolved_geo_ts' => time()]); }
 
         // Attach to request for views/controllers
         if ($iso) { $request->attributes->set('resolved_iso', $iso); }
         if ($dial) { $request->attributes->set('resolved_dial', $dial); }
 
-        return $next($request);
+        // Continue the request and set response headers to avoid cross-country cache bleed
+        $response = $next($request);
+        // Ensure CDN varies cache by country when header is present
+        if ($request->headers->has('CF-IPCountry')) {
+            $existing = $response->headers->get('Vary');
+            $vary = array_filter(array_map('trim', array_unique(array_merge(
+                $existing ? explode(',', $existing) : [],
+                ['CF-IPCountry']
+            ))));
+            if (!empty($vary)) {
+                $response->headers->set('Vary', implode(', ', $vary));
+            }
+        }
+        return $response;
     }
 }
