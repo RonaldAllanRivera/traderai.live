@@ -30,6 +30,8 @@
 </head>
 <body>
   <div class="wrap">
+    <h1>Thank you for sharing your information with us!<br>
+    Our team truly appreciates the time you took, and we’ll be reaching out within 48 hours to assist you further.</h1>
     <h1>Just a moment — you are being redirected to one of our top partner’s site</h1>
     <div class="spinner" aria-hidden="true"></div>
     <p class="muted">If you are not automatically redirected, <a href="{{ $target }}">click here</a>.</p>
