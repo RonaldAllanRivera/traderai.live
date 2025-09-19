@@ -3,6 +3,7 @@
 ### Added
 - Admin-managed Pixels are now injected into the homepage by location (`head`, `body_start`, `body_end`). Safe page intentionally does not inject marketing pixels by default.
 - Redirect splash page (`/redirect`) shows a short message/spinner for ~5 seconds after successful signup before forwarding to the external URL; marked noindex.
+- Server-side geo resolution middleware (`ResolveCountryMiddleware`) applied to `/` only. Resolves ISO via override → CDN header (e.g., `CF-IPCountry`) → session → IP lookup (700ms timeout). Initial render shows correct flag, dial, and notice; hidden `country` and `phone_prefix` pre-seeded.
 
 ### Changed
 - Public signup now submits via AJAX and, on success, shows a centered thank‑you message under the form and redirects after ~5 seconds.
@@ -12,6 +13,7 @@
 ### Fixed
 - Controller `LeadsController@store` now reliably returns JSON for AJAX requests (`ajax()`/`wantsJson()`/`Accept` header check) to avoid fetch parsing errors.
 - Added validation and a safe fallback when the settings redirect URL is empty/invalid to prevent 500s.
+- Country display: ensure dynamic notice shows full country names (e.g., Israel) instead of ISO codes by preferring `Intl.DisplayNames` with a robust fallback map; add IL → +972 to dial map.
 
 ## [0.3.5] - 2025-09-18
 

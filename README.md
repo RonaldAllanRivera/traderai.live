@@ -163,11 +163,11 @@ Open http://traderai.live.test in your browser.
   - CSV export endpoint streams in chunks for memory efficiency.
 
 - Geo & Phone Auto-Country
-  - Cloaker-driven overrides: `?__country=US` or `?geo=US` propagate to the homepage.
-  - Hidden `area_code` is pre-seeded server-side based on ISO (e.g., US → `1`).
-  - Phone widget flag/dial auto-syncs via `intl-tel-input` (with fallbacks to vanilla/jQuery API or manual DOM patching).
-  - Robust enforcement loop (10s) to survive late widget initialization.
-  - Dynamic notice under the phone field: “Currently only [flag sprite] [Country Name] Nationals can register.”
+  - Server-side resolution on homepage: `ResolveCountryMiddleware` determines the visitor ISO (priority: URL override → CDN header like `CF-IPCountry` → session → IP lookup via ipwho.is with 700ms timeout). Applied only to `/`.
+  - Cloaker-driven overrides: `?__country=US` or `?geo=US` propagate and take precedence.
+  - Initial render shows the correct flag/dial and notice. Hidden `area_code` (`phone_prefix`) and `country` inputs are pre-seeded server-side.
+  - Client-side: phone widget flag/dial auto-syncs via `intl-tel-input` (with fallbacks) and re-enforcement for up to 10s to cover late mounts.
+  - Dynamic notice under the phone field updates server-side and client-side: “Currently only [flag sprite] [Country Name] Nationals can register.” Country name uses `Intl.DisplayNames` with a robust fallback map (includes IL → Israel). Dial map expanded (e.g., IL → +972, BE → +32, and other common regions).
   - Middleware preserves overrides on redirect: `CloakerMiddleware` keeps `__country`, `geo`, `__ua`, `__ref`, and common UTM params when redirecting to offer/safe.
 
 ## Public Landing Pages
@@ -205,6 +205,10 @@ The public site renders pages from `resources/views/traderai-template/` for the 
   - `resources/views/landing/pages/cookie-content.blade.php`
 
 Routes are declared in `routes/web.php`.
+
+Route notes
+- `/` (homepage) uses `resolve.country` + `CloakerMiddleware`.
+- `/safe` does not use `resolve.country` by design; it remains a static safe page without marketing pixels.
 
 ### Pixels (Tracking)
 

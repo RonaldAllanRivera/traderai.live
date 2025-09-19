@@ -3,7 +3,7 @@
  <head>
   <base href="{{ asset('traderai-template/') }}/">
   <link href="css/video-js.css" rel="stylesheet"/>
-  <meta content="{{ strtoupper(request('__country', request('geo', 'PH'))) }}" name="isoCode"/>
+  <meta content="{{ strtoupper(request()->attributes->get('resolved_iso') ?? request('__country', request('geo', ''))) }}" name="isoCode"/>
   <meta charset="utf-8"/>
   <meta content="IE=edge" http-equiv="X-UA-Compatible"/>
   <title>
@@ -137,29 +137,26 @@
         </div>
         <div class="home-form-inner">
         @php
-          $iso = strtoupper(request('__country', request('geo', 'PH')));
-          $dialMap = ['PH'=>'63','SG'=>'65','US'=>'1','GB'=>'44','AE'=>'971','IN'=>'91'];
-          $preDial = $dialMap[$iso] ?? '63';
+          $iso = strtoupper(request()->attributes->get('resolved_iso') ?? request('__country', request('geo', '')) ?? 'PH');
+          $dialMap = [
+            // Core
+            'US'=>'1','CA'=>'1','GB'=>'44','IE'=>'353','AU'=>'61','NZ'=>'64',
+            // Europe
+            'BE'=>'32','NL'=>'31','DE'=>'49','FR'=>'33','ES'=>'34','PT'=>'351','IT'=>'39','AT'=>'43','CH'=>'41',
+            'SE'=>'46','NO'=>'47','DK'=>'45','FI'=>'358','PL'=>'48','CZ'=>'420','RO'=>'40','HU'=>'36','GR'=>'30','BG'=>'359',
+            // Asia
+            'PH'=>'63','SG'=>'65','MY'=>'60','ID'=>'62','TH'=>'66','VN'=>'84','JP'=>'81','KR'=>'82','IN'=>'91','AE'=>'971','SA'=>'966','TR'=>'90','IL'=>'972',
+            // Americas
+            'MX'=>'52','BR'=>'55','AR'=>'54','CL'=>'56','CO'=>'57',
+            // Africa
+            'ZA'=>'27','NG'=>'234','EG'=>'20'
+          ];
+          $preDial = request()->attributes->get('resolved_dial') ?? ($dialMap[$iso] ?? '63');
           // Country names for the notice
           $countryNames = [
-            'PH' => 'Philippines',
-            'US' => 'United States',
-            'SG' => 'Singapore',
-            'GB' => 'United Kingdom',
-            'AE' => 'United Arab Emirates',
-            'IN' => 'India',
+            'PH'=>'Philippines','US'=>'United States','SG'=>'Singapore','GB'=>'United Kingdom','AE'=>'United Arab Emirates','IN'=>'India','BE'=>'Belgium','FR'=>'France','DE'=>'Germany','NL'=>'Netherlands','ES'=>'Spain','IT'=>'Italy','SE'=>'Sweden','NO'=>'Norway','DK'=>'Denmark','FI'=>'Finland','PL'=>'Poland','IE'=>'Ireland','PT'=>'Portugal','RO'=>'Romania','HU'=>'Hungary','GR'=>'Greece','BG'=>'Bulgaria','AT'=>'Austria','CH'=>'Switzerland','AU'=>'Australia','NZ'=>'New Zealand','MX'=>'Mexico','BR'=>'Brazil','AR'=>'Argentina','CL'=>'Chile','CO'=>'Colombia','ZA'=>'South Africa','NG'=>'Nigeria','EG'=>'Egypt','JP'=>'Japan','KR'=>'South Korea','MY'=>'Malaysia','ID'=>'Indonesia','TH'=>'Thailand','VN'=>'Vietnam','TR'=>'Turkey','SA'=>'Saudi Arabia','CA'=>'Canada','IL'=>'Israel'
           ];
           $countryName = $countryNames[$iso] ?? $iso;
-          // Reliable emoji flag mapping for common countries (avoids mb/encoding issues in some PHP builds)
-          $emojiMap = [
-            'PH' => '🇵🇭',
-            'US' => '🇺🇸',
-            'SG' => '🇸🇬',
-            'GB' => '🇬🇧',
-            'AE' => '🇦🇪',
-            'IN' => '🇮🇳',
-          ];
-          $flagEmoji = $emojiMap[$iso] ?? '';
         @endphp
          <form action="{{ route('leads.store') }}" class="form-registration" data-id="form-registration" method="post" style="display: '';">
           @csrf
@@ -220,10 +217,10 @@
            </div>
           </div>
           <p>
-           <b>
-            Currently only <span class="iti__flag iti__{{ strtolower($iso) }}" style="display:inline-block;width:20px;height:15px;margin-right:6px;vertical-align:-2px;"></span> {{ $countryName }} Nationals can register.
-           </b>
-          </p>
+          <b>
+           Currently only <span id="notice-flag" class="iti__flag iti__{{ strtolower($iso) }}" style="display:inline-block;width:20px;height:15px;margin-right:6px;vertical-align:-2px;"></span> <span id="notice-country">{{ $countryName }}</span> Nationals can register.
+          </b>
+         </p>
           <div class="form-group text-center">
            <button class="registerBtn btn-text" data-i18n="" name="submit" style="position: static;" type="submit">
             Register Now
@@ -705,15 +702,20 @@ for (var e = 0; e < document.getElementsByClassName("fbclid").length; e++)
      var areaInput = document.querySelector('input.area_code');
      if (!phoneInput) { return; }
 
-     // Minimal ISO2 -> dial code map for overrides and testing (extend as needed)
-     var DIAL_MAP = {
-       'PH': '63',
-       'SG': '65',
-       'US': '1',
-       'GB': '44',
-       'AE': '971',
-       'IN': '91'
-     };
+     // ISO2 -> dial code map (expanded so fallback works when geo API is blocked)
+    var DIAL_MAP = {
+      // Core
+      'US': '1', 'CA': '1', 'GB': '44', 'IE': '353', 'AU': '61', 'NZ': '64',
+      // Europe
+      'BE': '32', 'NL': '31', 'DE': '49', 'FR': '33', 'ES': '34', 'PT': '351', 'IT': '39', 'AT': '43', 'CH': '41',
+      'SE': '46', 'NO': '47', 'DK': '45', 'FI': '358', 'PL': '48', 'CZ': '420', 'RO': '40', 'HU': '36', 'GR': '30', 'BG': '359',
+      // Asia
+      'PH': '63', 'SG': '65', 'MY': '60', 'ID': '62', 'TH': '66', 'VN': '84', 'JP': '81', 'KR': '82', 'IN': '91', 'AE': '971', 'SA': '966', 'TR': '90',
+      // Americas
+      'MX': '52', 'BR': '55', 'AR': '54', 'CL': '56', 'CO': '57',
+      // Africa
+      'ZA': '27', 'NG': '234', 'EG': '20'
+    };
 
      function manualUiUpdate(iso2, dial) {
        try {
@@ -733,6 +735,36 @@ for (var e = 0; e < document.getElementsByClassName("fbclid").length; e++)
          debugLog('manualUiUpdate', 'iso=', iso2, 'dial=', dial, 'updated');
        } catch (e) { /* no-op */ }
      }
+
+     // Update the notice and hidden inputs to reflect the active ISO/calling code
+    function updateNotice(iso2, dial) {
+      try {
+        var iso = iso2 ? String(iso2).toUpperCase() : null;
+        var fallbackMap = {
+          'PH':'Philippines','US':'United States','SG':'Singapore','GB':'United Kingdom','AE':'United Arab Emirates','IN':'India','BE':'Belgium','FR':'France','DE':'Germany','NL':'Netherlands','ES':'Spain','IT':'Italy','SE':'Sweden','NO':'Norway','DK':'Denmark','FI':'Finland','PL':'Poland','IE':'Ireland','PT':'Portugal','RO':'Romania','HU':'Hungary','GR':'Greece','BG':'Bulgaria','AT':'Austria','CH':'Switzerland','AU':'Australia','NZ':'New Zealand','MX':'Mexico','BR':'Brazil','AR':'Argentina','CL':'Chile','CO':'Colombia','ZA':'South Africa','NG':'Nigeria','EG':'Egypt','JP':'Japan','KR':'South Korea','MY':'Malaysia','ID':'Indonesia','TH':'Thailand','VN':'Vietnam','TR':'Turkey','SA':'Saudi Arabia','CA':'Canada','IL':'Israel'
+        };
+        var pretty = null;
+        try {
+          if (window.Intl && typeof Intl.DisplayNames === 'function') {
+            var dn = new Intl.DisplayNames(['en'], { type: 'region' });
+            pretty = dn.of(iso);
+          }
+        } catch (e) { /* ignore */ }
+        var countryEl = document.getElementById('notice-country');
+        if (countryEl && iso) { countryEl.textContent = pretty || fallbackMap[iso] || iso; }
+        var flagEl = document.getElementById('notice-flag');
+        if (flagEl && iso) {
+          Array.from(flagEl.classList).forEach(function (c) {
+            if (c.indexOf('iti__') === 0 && c !== 'iti__flag') { flagEl.classList.remove(c); }
+          });
+          flagEl.classList.add('iti__' + iso.toLowerCase());
+        }
+        var countryHidden = document.querySelector('input[name="country"]');
+        if (countryHidden && iso) countryHidden.value = iso;
+        var areaHidden = document.querySelector('input.area_code');
+        if (areaHidden && dial) areaHidden.value = String(dial).replace('+','');
+      } catch (e) { /* no-op */ }
+    }
 
      function applyGeo(iso2, callingCode) {
        var iso = iso2 ? String(iso2).toUpperCase() : null;
@@ -770,6 +802,8 @@ for (var e = 0; e < document.getElementsByClassName("fbclid").length; e++)
          areaInput.value = String(dial).replace('+','');
          debugLog('applyGeo', 'area_code set to', areaInput.value);
        }
+       // Update headline notice and hidden country
+       updateNotice(iso, dial);
      }
 
      // Enforce the target iso/dial briefly to survive late inits
@@ -834,25 +868,22 @@ for (var e = 0; e < document.getElementsByClassName("fbclid").length; e++)
     function debugLog(){ /* debug disabled */ }
     var overrideIso = params.get('__country') || params.get('geo');
     debugLog('overrideIso', overrideIso);
-     if (overrideIso) {
-      whenPhoneUiReady(function(){
+    whenPhoneUiReady(function(){
+      var metaEl = document.querySelector('meta[name="isoCode"]');
+      var metaIso = metaEl && metaEl.getAttribute('content');
+      if (overrideIso) {
         var isoUp = String(overrideIso).toUpperCase();
         var dial = DIAL_MAP[isoUp] || null;
         applyGeo(isoUp, dial);
         enforce(isoUp, dial);
-      });
-    } else {
-      whenPhoneUiReady(function(){
-        var metaEl = document.querySelector('meta[name="isoCode"]');
-        var metaIso = metaEl && metaEl.getAttribute('content');
-        if (metaIso) {
-          applyGeo(metaIso, DIAL_MAP[String(metaIso).toUpperCase()] || null);
-          enforce(metaIso, DIAL_MAP[String(metaIso).toUpperCase()] || null);
-        } else {
-          fetchGeoAndApply();
-        }
-      });
-    }
+      } else if (metaIso) {
+        applyGeo(metaIso, DIAL_MAP[String(metaIso).toUpperCase()] || null);
+        enforce(metaIso, DIAL_MAP[String(metaIso).toUpperCase()] || null);
+      } else {
+        // No explicit ISO provided → fetch actual country via IP and apply
+        fetchGeoAndApply();
+      }
+    });
 
      // Expose a simple test hook (logs removed)
     window.traderaiSetGeoTest = function (iso2, callingCode) {
