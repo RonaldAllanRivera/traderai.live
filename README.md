@@ -173,41 +173,27 @@ Open http://traderai.live.test in your browser.
   - CDN cache safety: homepage responses include `Vary: CF-IPCountry` when available to avoid cross-country cache bleed on Cloudflare.
   - Session stickiness: resolved geo is cached in session for 60 seconds to balance stability and fast updates.
 
-## Public Landing Pages
+## Public Pages (Current)
 
-The public site renders pages from `resources/views/traderai-template/` for the main entry points, with additional legal/auth pages under `resources/views/landing/`.
+The public site now serves only TraderAI template pages. Legacy public landing/auth pages were removed.
 
-- Layout
-  - `resources/views/layouts/landing.blade.php` — skeleton page that includes head, header, sticky CTA, footer, and scripts.
-- Includes (ported from `landing-pages/includes/`)
-  - `resources/views/landing/includes/head.blade.php`
-  - `resources/views/landing/includes/header.blade.php`
-  - `resources/views/landing/includes/nav-desktop.blade.php`
-  - `resources/views/landing/includes/nav-mobile.blade.php`
-  - `resources/views/landing/includes/sticky.blade.php`
-  - `resources/views/landing/includes/footer.blade.php`
-  - `resources/views/landing/includes/scripts.blade.php`
-  - `resources/views/landing/includes/form-signup.blade.php`
-  - `resources/views/landing/includes/form-login.blade.php`
-  - `resources/views/landing/includes/main.blade.php` (homepage sections)
 - TraderAI template pages
   - `resources/views/traderai-template/home.blade.php` → `/`
-  - `resources/views/traderai-template/safe.blade.php` → `/safe` (Cloaker "safe" destination)
-  - `resources/views/traderai-template/redirect.blade.php` → `/redirect` (internal splash page used after signup; displays a short message & spinner and forwards after ~5s)
-- Legacy landing pages (still included for reference/legal)
-  - `resources/views/landing/home.blade.php` → `/` (not used by default)
-  - `resources/views/landing/login.blade.php` → `/login`
-  - `resources/views/landing/sign-up.blade.php` → `/sign-up`
-  - `resources/views/landing/dashboard.blade.php` → `/dashboard` (auth)
-  - `resources/views/landing/privacy.blade.php` → `/privacy`
-  - `resources/views/landing/terms.blade.php` → `/terms`
-  - `resources/views/landing/cookie.blade.php` → `/cookie`
-- Legal content partials
-  - `resources/views/landing/pages/privacy-content.blade.php`
-  - `resources/views/landing/pages/terms-content.blade.php`
-  - `resources/views/landing/pages/cookie-content.blade.php`
+  - `resources/views/traderai-template/safe.blade.php` → `/safe`
+  - `resources/views/traderai-template/redirect.blade.php` → `/redirect`
+
+- Lead submission
+  - `POST /leads` handled by `App\Http\Controllers\LeadsController@store`
+  - `GET /leads/export` streams CSV; controller checks `Auth::user()->is_admin`
 
 Routes are declared in `routes/web.php`.
+
+## Authentication (Admin only)
+
+- Admin authentication is fully managed by Filament under `/admin/*`.
+- Password reset is enabled via `->passwordReset()` in `app/Providers/Filament/AdminPanelProvider.php`.
+- Admin login includes a "Forgot your password?" link that opens the Filament forgot-password page.
+- Public auth routes (`/login`, `/forgot-password`, `/reset-password`, `/dashboard`) were removed.
 
 Route notes
 - `/` (homepage) uses `resolve.country` + `CloakerMiddleware`.

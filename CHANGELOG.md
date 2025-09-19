@@ -1,3 +1,13 @@
+## [0.3.7] - 2025-09-19
+
+### Changed
+- Removed legacy public landing/auth Blade views and their routes. Public site now serves only TraderAI templates under `resources/views/traderai-template/`.
+- Admin authentication moved fully to Filament (`/admin/*`) with `->passwordReset()` enabled. Admin login shows a "Forgot your password?" link that opens Filament's page.
+- Cleaned `routes/web.php`: commented out public auth/landing/legal routes; kept only home, safe, redirect, and lead endpoints.
+
+### Fixed
+- Filament User form validates unique email (ignores record on edit) and requires password only on create, preventing DB unique constraint errors.
+
 ## [0.3.6] - 2025-09-19
 
 ### Added

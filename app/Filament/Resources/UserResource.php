@@ -34,11 +34,16 @@ class UserResource extends Resource
                     ->label('Email')
                     ->email()
                     ->required()
-                    ->maxLength(255),
+                    ->maxLength(255)
+                    ->unique(ignoreRecord: true)
+                    ->validationMessages([
+                        'unique' => 'This email address is already in use.',
+                    ]),
                 Forms\Components\TextInput::make('password')
                     ->label('Password (leave blank to keep current)')
                     ->password()
                     ->maxLength(255)
+                    ->required(fn (string $context) => $context === 'create')
                     ->dehydrated(fn ($state) => filled($state)),
                 Forms\Components\Select::make('is_admin')
                     ->label('Is Admin')

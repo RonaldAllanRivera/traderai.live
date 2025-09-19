@@ -30,6 +30,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->passwordReset()
             // Add a "Forgot password?" link below the admin login form
             ->renderHook('panels::auth.login.form.after', fn () => view('filament.custom.auth-forgot-link'))
             ->colors([
