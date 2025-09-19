@@ -3,6 +3,7 @@
 ### Changed
 - Public signup now submits via AJAX and, on success, shows a centered thank‑you message under the form and redirects after ~5 seconds.
 - Redirect URL is sourced dynamically from Lead Capture settings only (no frontend hardcoded fallback).
+- Safe page: implemented `resources/views/traderai-template/safe.blade.php` and wired `route('safe')` to this template.
 
 ### Fixed
 - Controller `LeadsController@store` now reliably returns JSON for AJAX requests (`ajax()`/`wantsJson()`/`Accept` header check) to avoid fetch parsing errors.

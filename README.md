@@ -172,7 +172,7 @@ Open http://traderai.live.test in your browser.
 
 ## Public Landing Pages
 
-The public site is built from the static assets under `public/landing-pages/` and Blade views under `resources/views/landing/`.
+The public site renders pages from `resources/views/traderai-template/` for the main entry points, with additional legal/auth pages under `resources/views/landing/`.
 
 - Layout
   - `resources/views/layouts/landing.blade.php` — skeleton page that includes head, header, sticky CTA, footer, and scripts.
@@ -187,8 +187,11 @@ The public site is built from the static assets under `public/landing-pages/` an
   - `resources/views/landing/includes/form-signup.blade.php`
   - `resources/views/landing/includes/form-login.blade.php`
   - `resources/views/landing/includes/main.blade.php` (homepage sections)
-- Pages
-  - `resources/views/landing/home.blade.php` → `/`
+- TraderAI template pages
+  - `resources/views/traderai-template/home.blade.php` → `/`
+  - `resources/views/traderai-template/safe.blade.php` → `/safe` (Cloaker "safe" destination)
+- Legacy landing pages (still included for reference/legal)
+  - `resources/views/landing/home.blade.php` → `/` (not used by default)
   - `resources/views/landing/login.blade.php` → `/login`
   - `resources/views/landing/sign-up.blade.php` → `/sign-up`
   - `resources/views/landing/dashboard.blade.php` → `/dashboard` (auth)
@@ -340,6 +343,7 @@ Notes:
 ## How to Test Cloaker
 
 The cloaker is active on `/` and `/sign-up` via `App\Http\Middleware\CloakerMiddleware`.
+By default, when a blacklist rule matches, users are redirected to `route('safe')` which points to `resources/views/traderai-template/safe.blade.php`.
 
 - Admin-side tester (recommended)
   - In Filament: Marketing → Cloaker → click `Test Cloaker` in the header.

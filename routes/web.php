@@ -18,7 +18,7 @@ Route::match(['GET', 'POST'], '/traderai-template/index.php', function () {
 Route::view('/privacy', 'landing.privacy')->name('privacy');
 Route::view('/terms', 'landing.terms')->name('terms');
 Route::view('/cookie', 'landing.cookie')->name('cookie');
-Route::view('/safe', 'landing.safe')->name('safe');
+Route::view('/safe', 'traderai-template.safe')->name('safe');
 Route::view('/login', 'landing.login')->name('login');
 Route::match(['GET', 'HEAD'], '/sign-up', function () {
     return view('landing.sign-up');
