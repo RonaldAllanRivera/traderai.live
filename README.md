@@ -142,6 +142,10 @@ Open http://traderai.live.test in your browser.
     - Geo/Phone: enable worldwide auto country code & flag, or force a Priority Country (locks flag/dial and hides country dropdown).
   - Route `POST /leads` is rate-limited to `20/min` to mitigate abuse.
 
+- Public UX tweaks
+  - Homepage CTA title "Discover The Platform!" now links to the configured Redirect URL when auto‑login is disabled (Admin → System → Lead Capture → redirect_url_when_auto_login_disabled). Falls back to `/redirect` if empty.
+  - Header language block shows "EN" with a simple dropdown containing “English” that links back to the homepage.
+
 - Admin (Filament 4)
   - Leads: list with search, status badge/filter, and CSV export.
   - Users: list/create/edit with `is_admin` toggle and optional password update.
@@ -216,6 +220,17 @@ Routes are declared in `routes/web.php`.
 - Settings class: `App\\Settings\\SiteAppearanceSettings` (`group(): 'site_appearance'`).
 - DB migration: `database/settings/2025_09_19_000002_create_site_appearance_settings.php` seeds default from `config/templates.php`.
 - After saving, the page auto-clears compiled views so the change is immediate.
+
+Notes:
+- `config/templates.php` now declares supported locales for the TraderAI template:
+  ```php
+  'traderai-template' => [
+      'label' => 'TraderAI',
+      'views' => ['home', 'safe', 'redirect'],
+      'locales' => ['en','es','fr','de','it','pt','ar','he'],
+  ],
+  ```
+  This registry will be used by the Appearance settings to restrict language choices per template.
 
 Add a new template
 - Create `resources/views/{slug}/home.blade.php`, `safe.blade.php`, `redirect.blade.php`.

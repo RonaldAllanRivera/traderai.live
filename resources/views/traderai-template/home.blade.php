@@ -101,6 +101,9 @@
         </i>
        </span>
        <ul class="language-list">
+        <li>
+          <a href="{{ route('home') }}">English</a>
+        </li>
        </ul>
       </div>
      </div>
@@ -139,7 +142,14 @@
      <div class="col-lg-5">
       <div class="home-form" id="req-form-section">
        <div class="home-form-title" style="display: '';">
-        Discover The Platform!
+        @php
+          $redirect = ($leadSettings && !empty($leadSettings->redirect_url_when_auto_login_disabled))
+            ? $leadSettings->redirect_url_when_auto_login_disabled
+            : url('/redirect');
+        @endphp
+        <a href="{{ $redirect }}" style="color:#fff !important; text-decoration:none !important;">
+          Discover The Platform!
+        </a>
        </div>
        <div class="home-form-inner">
 
@@ -671,6 +681,25 @@
     /* Hide check icon when inactive and hide error blocks when inactive */
     [data-check-icon][data-check-icon="inactive"] { display: none !important; }
     [data-for-error][data-error-status="inactive"] { display: none !important; }
+    /* Language dropdown basic styles */
+    .language { position: relative; }
+    .language .language-list {
+      display: none;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin: 6px 0 0;
+      padding: 6px 10px;
+      list-style: none;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      z-index: 50;
+      min-width: 140px;
+    }
+    .language:hover .language-list { display: block; }
+    .language .language-list a { color: #111; text-decoration: none; display: block; padding: 6px 4px; }
+    .language .language-list a:hover { background: #f3f4f6; }
   </style>
   @if($forceCountry)
   <style>

@@ -1,3 +1,13 @@
+## [0.3.10] - 2025-09-21
+
+### Changed
+- Homepage CTA title ("Discover The Platform!") now links to the Lead Capture Settings redirect when auto‑login is disabled, with a safe fallback to `/redirect`.
+- Forced white styling for the CTA link to avoid theme anchor overrides.
+
+### Added
+- Simple header language dropdown showing “EN” with a single menu item “English” that links back to the homepage.
+- `config/templates.php` now declares supported locales for `traderai-template` to prepare admin‑selectable languages per template.
+
 ## [0.3.9] - 2025-09-21
 
 ### Added
