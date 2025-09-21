@@ -6,6 +6,7 @@
 - Forced-country mode: hides the intl-tel-input dropdown and locks the flag/dial to the Priority Country.
 - AJAX error surfacing on the public form: shows first server validation error inline; maps to phone/email and disables the green check when invalid.
 - Throttle for POST /leads (20 requests/minute) to mitigate abuse.
+- Cloudflare Turnstile CAPTCHA on public lead form (config/services.php, Blade widget, server-side verification).
 
 ### Changed
 - Filament Settings page aligned to installed version: Schema signature retained and unavailable components removed.

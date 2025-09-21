@@ -227,6 +227,12 @@
              <img alt="✔" loading="lazy" src="img/check-icon.png"/>
             </span>
            </div>
+          @if(config('services.turnstile.enabled') && config('services.turnstile.site_key'))
+          <div class="form-group" id="captcha-block">
+            <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.site_key') }}" data-theme="light"></div>
+            <div data-error-status="inactive" data-for-error="captcha">Please verify that you are human.</div>
+          </div>
+          @endif
           </div>
           <p>
           <b>
@@ -658,6 +664,9 @@
     </div>
    </div>
    <link href="css/main.css" rel="stylesheet"/>
+  @if(config('services.turnstile.enabled') && config('services.turnstile.site_key'))
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  @endif
   <style>
     /* Hide check icon when inactive and hide error blocks when inactive */
     [data-check-icon][data-check-icon="inactive"] { display: none !important; }
@@ -1058,6 +1067,12 @@ for (var e = 0; e < document.getElementsByClassName("fbclid").length; e++)
                 var msg = (payload.errors.phone_number && payload.errors.phone_number[0]) || (payload.errors.phone && payload.errors.phone[0]) || '';
                 setError('phone', msg || 'Please enter a valid phone number.');
                 setCheckIcon('phone', false);
+                handled = true;
+              }
+              if (payload.errors['cf-turnstile-response']) {
+                var cmsg = payload.errors['cf-turnstile-response'][0] || 'Please verify that you are human.';
+                setError('captcha', cmsg);
+                try { if (window.turnstile && typeof window.turnstile.reset === 'function') { window.turnstile.reset(); } } catch(e){}
                 handled = true;
               }
               if (!handled) {

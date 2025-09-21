@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -56,6 +57,34 @@ class LeadsController extends Controller
             'country'      => ['nullable', 'string', 'max:256'],
             'phone_prefix' => ['nullable', 'string', 'max:64'],
             'password'     => ['nullable', 'string', 'max:255'],
+            // Cloudflare Turnstile CAPTCHA (if enabled)
+            'cf-turnstile-response' => [
+                'nullable',
+                function (string $attribute, mixed $value, \Closure $fail) use ($request) {
+                    if (! config('services.turnstile.enabled')) {
+                        return; // skip when disabled
+                    }
+                    if (! $value) {
+                        return $fail('Please verify that you are human.');
+                    }
+                    try {
+                        $resp = Http::asForm()
+                            ->timeout((int) config('services.turnstile.timeout', 5))
+                            ->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
+                                'secret'   => (string) config('services.turnstile.secret_key'),
+                                'response' => (string) $value,
+                                'remoteip' => (string) $request->ip(),
+                            ]);
+                        $ok = $resp->ok();
+                        $data = $ok ? $resp->json() : null;
+                        if (! $ok || ! ($data['success'] ?? false)) {
+                            return $fail('CAPTCHA verification failed. Please try again.');
+                        }
+                    } catch (\Throwable $e) {
+                        return $fail('CAPTCHA verification failed. Please try again.');
+                    }
+                },
+            ],
             'phone_number' => [
                 'required', 'string', 'max:64',
                 function (string $attribute, mixed $value, \Closure $fail) use ($util, $region, $request, $errMsg) {

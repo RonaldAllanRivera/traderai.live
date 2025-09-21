@@ -27,6 +27,7 @@ Production‑ready Laravel 12 app with a modern Filament 4 admin and a dynamic p
  - [Deployment (Namecheap cPanel + GitHub, public_html)](#deployment-namecheap-cpanel--github-public_html)
 - [Troubleshooting](#troubleshooting)
  - [Troubleshooting Note: 422 with Ofcom test numbers](#troubleshooting-note-422-with-ofcom-test-numbers)
+- [Bot Protection (Cloudflare Turnstile)](#bot-protection-cloudflare-turnstile)
 - [Changelog](#changelog)
 - [License](#license)
 
@@ -134,6 +135,7 @@ Open http://traderai.live.test in your browser.
     - Normalizes to E.164 (split into `phone_prefix` + national `phone_number`).
   - AJAX success returns a redirect URL from settings; UI shows an inline thank-you then navigates to `/redirect` (forwards after ~5s).
   - AJAX errors surface inline with field-level messages (422 shows the first validation error from the server).
+  - Optional Cloudflare Turnstile CAPTCHA (server-verified). See: [Bot Protection (Cloudflare Turnstile)](#bot-protection-cloudflare-turnstile)
   - Lead Capture Settings (Admin → System → Lead Capture):
     - Toggle: Auto-login user after signup. Default OFF in this repo; if ON, ensure your app provides a post-login destination.
     - When OFF: redirects to a configurable external URL (default `https://www.vantage-traders.net/`).
@@ -635,6 +637,45 @@ php artisan optimize
   - Ensure the number matches the active country. In forced‑GB mode, PH/US formats will fail.
   - Ofcom drama/test numbers (e.g., `07700 900123`) are treated as non‑assignable by libphonenumber and will fail.
   - Don’t type `+44` inside the input; the UI already supplies the prefix via a hidden field.
+
+- CAPTCHA always fails
+  - Verify keys and domain at Cloudflare → Turnstile. Use the right site/secret pair and ensure `TURNSTILE_ENABLED=true`.
+  - The widget auto-posts a hidden `cf-turnstile-response`. Make sure the widget renders (no ad/script blockers during testing).
+  - Check server logs for errors if 422 persists.
+
+## Bot Protection (Cloudflare Turnstile)
+
+Turnstile is integrated on the public lead form and verified server-side when enabled.
+
+0) Create a Turnstile widget and add your domains
+- Go to https://dash.cloudflare.com → Turnstile → Add widget
+- Widget name: any descriptive label (e.g., TraderAI Lead Form)
+- Hostnames: add each host you will use (no protocol or paths):
+  - traderai.live
+  - traderai.live.test
+  - localhost
+  - 127.0.0.1
+  - app.traderai.live (if you use a subdomain)
+- Widget mode: Managed (recommended). You can switch to Invisible later.
+- Pre-clearance: No (unless you specifically need a site-wide Cloudflare challenge bypass cookie)
+- Save and copy the generated Site key and Secret key.
+
+1) Configure environment
+```
+TURNSTILE_ENABLED=true
+TURNSTILE_SITE_KEY=1x00000000000000000000AA   # replace with your site key
+TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA  # replace with your secret
+TURNSTILE_TIMEOUT=5
+```
+
+2) Code paths
+- Config: `config/services.php` → `services.turnstile.*`
+- Blade widget: `resources/views/traderai-template/home.blade.php` (auto-includes API script and renders widget when enabled)
+- Verification: `App\Http\Controllers\LeadsController@store` validates `cf-turnstile-response` via Cloudflare’s `siteverify` endpoint
+
+3) Testing
+- With valid keys, the widget appears below the phone input. Submit the form; if CAPTCHA is missing/invalid, you’ll see an inline error and a reset of the widget.
+- To disable locally, set `TURNSTILE_ENABLED=false` and clear caches: `php artisan optimize:clear`.
 
 - Filament delete action classes not found
   - Ensure Filament v4 subpackages are installed and autoloaded:
