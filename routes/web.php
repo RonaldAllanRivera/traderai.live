@@ -22,7 +22,9 @@ Route::match(['GET', 'POST'], '/{template}/index.php', function () {
 Route::get('/safe', [PublicPagesController::class, 'safe'])->name('safe');
 Route::get('/redirect', [PublicPagesController::class, 'redirect'])->name('redirect');
 
-// Lead submissions
-Route::post('/leads', [LeadsController::class, 'store'])->name('leads.store');
+// Lead submissions (rate limited)
+Route::post('/leads', [LeadsController::class, 'store'])
+    ->middleware('throttle:20,1')
+    ->name('leads.store');
 // Export leads CSV (admin check is performed in the controller)
 Route::get('/leads/export', [LeadsController::class, 'exportCsv'])->name('leads.export');

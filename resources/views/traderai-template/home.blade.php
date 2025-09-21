@@ -3,7 +3,18 @@
  <head>
   <base href="{{ asset('traderai-template/') }}/">
   <link href="css/video-js.css" rel="stylesheet"/>
-  <meta content="{{ strtoupper(request()->attributes->get('resolved_iso') ?? request('__country', request('geo', ''))) }}" name="isoCode"/>
+  @php
+    try { $leadSettings = app(\App\Settings\LeadCaptureSettings::class); } catch (\Throwable $e) { $leadSettings = null; }
+    $resolvedIsoRaw = strtoupper(request()->attributes->get('resolved_iso') ?? request('__country', request('geo', '')) ?? 'PH');
+    $computedIso = $resolvedIsoRaw;
+    $forceCountry = false;
+    if ($leadSettings && ($leadSettings->country_auto_adjust_enabled ?? true) === false) {
+        $computedIso = strtoupper($leadSettings->priority_country ?? 'GB');
+        $forceCountry = true;
+    }
+  @endphp
+  <meta content="{{ $computedIso }}" name="isoCode"/>
+  <meta content="{{ $forceCountry ? '1' : '0' }}" name="forceCountry"/>
   <meta charset="utf-8"/>
   <meta content="IE=edge" http-equiv="X-UA-Compatible"/>
   <title>
@@ -37,7 +48,7 @@
     {!! $___px->code !!}
   @endforeach
  </head>
- <body class="main-page">
+ <body class="main-page {{ $forceCountry ? 'force-no-country' : '' }}">
   <?php /** Pixels: body_start location */ ?>
   @php
     try {
@@ -137,7 +148,8 @@
         </div>
         <div class="home-form-inner">
         @php
-          $iso = strtoupper(request()->attributes->get('resolved_iso') ?? request('__country', request('geo', '')) ?? 'PH');
+          // Use computedIso from head (LeadCaptureSettings may force a priority country)
+          $iso = isset($computedIso) ? $computedIso : strtoupper(request()->attributes->get('resolved_iso') ?? request('__country', request('geo', '')) ?? 'PH');
           $dialMap = [
             // Core
             'US'=>'1','CA'=>'1','GB'=>'44','IE'=>'353','AU'=>'61','NZ'=>'64',
@@ -207,7 +219,7 @@
            <div class="form-group">
             <input class="area_code" name="phone_prefix" required="" type="hidden" value="{{ $preDial }}"/>
             <input name="country" type="hidden" value="{{ $iso }}"/>
-            <input class="phone" name="phone_number" required="" type="number" value=""/>
+            <input class="phone" name="phone_number" required="" type="tel" value="" data-force-country="{{ $forceCountry ? '1' : '0' }}"/>
             <div data-error-status="inactive" data-for-error="phone">
              Please enter a valid phone number.
             </div>
@@ -646,6 +658,19 @@
     </div>
    </div>
    <link href="css/main.css" rel="stylesheet"/>
+  <style>
+    /* Hide check icon when inactive and hide error blocks when inactive */
+    [data-check-icon][data-check-icon="inactive"] { display: none !important; }
+    [data-for-error][data-error-status="inactive"] { display: none !important; }
+  </style>
+  @if($forceCountry)
+  <style>
+    /* Hide intl-tel-input dropdown when country is forced */
+    .force-no-country .iti .iti__arrow { display: none !important; }
+    .force-no-country .iti .iti__selected-flag { pointer-events: none !important; cursor: default !important; }
+    .force-no-country .iti__country-list { display: none !important; }
+  </style>
+  @endif
    <script data-cfasync="false" src="js/email-decode.min.js">
    </script>
    <script src="js/main.js" type="text/javascript">
@@ -825,17 +850,17 @@ for (var e = 0; e < document.getElementsByClassName("fbclid").length; e++)
      }
 
      function fetchGeoAndApply() {
-       // Lightweight IP geolocation (CORS-enabled)
-       fetch('https://ipwho.is/?fields=country_code,calling_code')
-         .then(function (r) { return r.json(); })
-         .then(function (data) {
-           var iso = data && data.country_code;
-           var dial = data && data.calling_code; // e.g. "63"
-           debugLog('geo fetch', JSON.stringify(data));
-           applyGeo(iso, dial);
-         })
-         .catch(function () { /* network failure: silently ignore */ });
-     }
+      // Lightweight IP geolocation (CORS-enabled)
+      fetch('https://ipwho.is/?fields=country_code,calling_code')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          var iso = data && data.country_code;
+          var dial = data && data.calling_code; // e.g. "63"
+          debugLog('geo fetch', JSON.stringify(data));
+          applyGeo(iso, dial);
+        })
+        .catch(function () { /* network failure: silently ignore */ });
+    }
 
      // Wait for plugin/wrapper to appear, then apply
      function whenPhoneUiReady(cb) {
@@ -863,22 +888,25 @@ for (var e = 0; e < document.getElementsByClassName("fbclid").length; e++)
        } catch (e) { /* no-op */ }
      }
 
-     // URL overrides: ?__country=PH (from Admin Cloaker) or ?geo=PH
+     // Respect force mode: if forced, ignore URL overrides & geo
     var params = new URLSearchParams(window.location.search);
     function debugLog(){ /* debug disabled */ }
     var overrideIso = params.get('__country') || params.get('geo');
-    debugLog('overrideIso', overrideIso);
+    var metaForceEl = document.querySelector('meta[name="forceCountry"]');
+    var isForced = metaForceEl && metaForceEl.getAttribute('content') === '1';
     whenPhoneUiReady(function(){
       var metaEl = document.querySelector('meta[name="isoCode"]');
       var metaIso = metaEl && metaEl.getAttribute('content');
+      if (isForced && metaIso) {
+        applyGeo(metaIso, DIAL_MAP[String(metaIso).toUpperCase()] || null);
+        enforce(metaIso, DIAL_MAP[String(metaIso).toUpperCase()] || null);
+        return;
+      }
       if (overrideIso) {
         var isoUp = String(overrideIso).toUpperCase();
         var dial = DIAL_MAP[isoUp] || null;
         applyGeo(isoUp, dial);
         enforce(isoUp, dial);
-      } else if (metaIso) {
-        applyGeo(metaIso, DIAL_MAP[String(metaIso).toUpperCase()] || null);
-        enforce(metaIso, DIAL_MAP[String(metaIso).toUpperCase()] || null);
       } else {
         // No explicit ISO provided → fetch actual country via IP and apply
         fetchGeoAndApply();
@@ -939,16 +967,42 @@ for (var e = 0; e < document.getElementsByClassName("fbclid").length; e++)
        return ok;
      }
 
-     function validatePhone(opts){
-       var silent = opts && opts.silent;
-       if(!el.phone) return true;
-       var v = String(el.phone.value||'');
-       var digits = v.replace(/\D/g,'');
-       var ok = digits.length >= 6 && digits.length <= 14;
-       if (ok) { clearError('phone'); }
-       else { if (silent) setCheckIcon('phone', false); else setError('phone','Please enter a valid phone number.'); }
-       return ok;
-     }
+     function getActiveIso(){
+      var metaEl = document.querySelector('meta[name="isoCode"]');
+      return (metaEl && metaEl.getAttribute('content') || '').toUpperCase();
+    }
+
+    function validatePhone(opts){
+      var silent = opts && opts.silent;
+      if(!el.phone) return true;
+      var v = String(el.phone.value||'');
+      var digits = v.replace(/\D/g,'');
+      var iso = getActiveIso();
+      var ok;
+      switch(iso){
+        case 'GB':
+          // UK mobiles: 07XXXXXXXXX (11 digits) or without trunk 0: 7XXXXXXXXX (10 digits)
+          ok = /^(0?7\d{9})$/.test(digits);
+          break;
+        case 'US':
+          // Basic NANP 10 digits
+          ok = /^\d{10}$/.test(digits);
+          break;
+        case 'IL':
+          // IL mobile: 05X-XXXXXXX (allow optional leading 0)
+          ok = /^(0?5\d{8})$/.test(digits);
+          break;
+        case 'AE':
+          // AE mobile: 05X XXXXXXX/XXXXXXX (allow 8-9 after the 5, optional 0)
+          ok = /^(0?5\d{7,8})$/.test(digits);
+          break;
+        default:
+          ok = digits.length >= 6 && digits.length <= 14;
+      }
+      if (ok) { clearError('phone'); }
+      else { if (silent) setCheckIcon('phone', false); else setError('phone','Please enter a valid phone number.'); }
+      return ok;
+    }
 
      el.email && el.email.addEventListener('blur', function(){ hideAlert(); validateEmail({silent:false}); });
      el.phone && el.phone.addEventListener('blur', function(){ hideAlert(); validatePhone({silent:false}); });
@@ -986,8 +1040,55 @@ for (var e = 0; e < document.getElementsByClassName("fbclid").length; e++)
         },
         body: fd,
         credentials: 'same-origin'
-      }).then(function(r){
-        if (!r.ok) throw new Error('Network');
+      }).then(async function(r){
+        if (!r.ok) {
+          var text = '';
+          try { text = await r.text(); } catch(e){}
+          try {
+            var payload = text ? JSON.parse(text) : null;
+            // Laravel validation errors
+            if (r.status === 422 && payload && payload.errors) {
+              // Map errors to fields when possible
+              var handled = false;
+              if (payload.errors.email) {
+                setError('email', payload.errors.email[0] || '');
+                handled = true;
+              }
+              if (payload.errors.phone_number || payload.errors.phone) {
+                var msg = (payload.errors.phone_number && payload.errors.phone_number[0]) || (payload.errors.phone && payload.errors.phone[0]) || '';
+                setError('phone', msg || 'Please enter a valid phone number.');
+                setCheckIcon('phone', false);
+                handled = true;
+              }
+              if (!handled) {
+                var firstKey = Object.keys(payload.errors)[0];
+                var firstMsg = firstKey ? (payload.errors[firstKey][0] || '') : '';
+                showAlert(firstMsg || 'Please check your input and try again.');
+              }
+              btn && (btn.disabled = false);
+              if (successEl){ successEl.classList.add('hidden'); }
+              return Promise.reject();
+            }
+            // Too many requests
+            if (r.status === 429) {
+              showAlert('Too many attempts. Please wait a moment and try again.');
+              btn && (btn.disabled = false);
+              if (successEl){ successEl.classList.add('hidden'); }
+              return Promise.reject();
+            }
+            // Other server error
+            showAlert('Submission failed. Please try again.');
+            btn && (btn.disabled = false);
+            if (successEl){ successEl.classList.add('hidden'); }
+            return Promise.reject();
+          } catch(e) {
+            // Non-JSON failure
+            showAlert('Submission failed. Please try again.');
+            btn && (btn.disabled = false);
+            if (successEl){ successEl.classList.add('hidden'); }
+            return Promise.reject();
+          }
+        }
         return r.json();
       }).then(function(data){
         // Show success message under the form

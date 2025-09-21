@@ -7,7 +7,7 @@ Production‑ready Laravel 12 app with a modern Filament 4 admin and a dynamic p
 - Leads at scale: Leads and Users with search/filtering and streaming CSV export.
 - Pixels manager: attach tracking snippets by provider, location, and status.
 - Cloaker middleware: rule‑based allow/redirect by IP, country, UA, referrer, and params; includes counters and an admin tester.
-- Geo/phone auto‑country: initial render and phone widget dial/flag synced; CDN‑safe with Vary: CF‑IPCountry.
+- Geo/phone controls: admin‑controlled worldwide auto country code or forced Priority Country, with server‑side libphonenumber validation and client‑side UX.
 - Operational maturity: SSH+Git deployment flows, clear env/bootstrap, troubleshooting, and testing guides.
 
 ## Table of Contents
@@ -26,6 +26,7 @@ Production‑ready Laravel 12 app with a modern Filament 4 admin and a dynamic p
 - [Deployment (SiteGround SSH + GitHub)](#deployment-siteground-ssh--github)
  - [Deployment (Namecheap cPanel + GitHub, public_html)](#deployment-namecheap-cpanel--github-public_html)
 - [Troubleshooting](#troubleshooting)
+ - [Troubleshooting Note: 422 with Ofcom test numbers](#troubleshooting-note-422-with-ofcom-test-numbers)
 - [Changelog](#changelog)
 - [License](#license)
 
@@ -127,11 +128,17 @@ Open http://traderai.live.test in your browser.
 
 - Lead Capture & Redirect Flow
   - Sign-up posts to `POST /leads`; creates a `Lead` and a matching `User` if not existing.
-  - AJAX success response returns a redirect URL from settings; UX shows an inline thank-you then navigates to `/redirect` which forwards after ~5s.
+  - Server-side phone validation backed by `giggsey/libphonenumber-for-php`:
+    - Accepts MOBILE and FIXED_LINE_OR_MOBILE types only.
+    - Enforces the target region (Priority Country when forced, otherwise the selected/detected country).
+    - Normalizes to E.164 (split into `phone_prefix` + national `phone_number`).
+  - AJAX success returns a redirect URL from settings; UI shows an inline thank-you then navigates to `/redirect` (forwards after ~5s).
+  - AJAX errors surface inline with field-level messages (422 shows the first validation error from the server).
   - Lead Capture Settings (Admin → System → Lead Capture):
     - Toggle: Auto-login user after signup. Default OFF in this repo; if ON, ensure your app provides a post-login destination.
     - When OFF: redirects to a configurable external URL (default `https://www.vantage-traders.net/`).
-  - Client-side validation kept lightweight for conversion; phone lenient (6–14 digits).
+    - Geo/Phone: enable worldwide auto country code & flag, or force a Priority Country (locks flag/dial and hides country dropdown).
+  - Route `POST /leads` is rate-limited to `20/min` to mitigate abuse.
 
 - Admin (Filament 4)
   - Leads: list with search, status badge/filter, and CSV export.
@@ -142,6 +149,19 @@ Open http://traderai.live.test in your browser.
   - Cloaker: create rules (whitelist/blacklist) with match types (ip/country/ua/referrer/param), metrics, admin tester with presets and run-on-route buttons.
   - Access control: only users with `is_admin = true` can access `/admin`; non-admins are redirected to `/dashboard`.
   - Admin login includes a “Forgot your password?” link.
+
+### Lead Capture Settings (Geo & Phone)
+
+- Page: Admin → System → Lead Capture (`App\Filament\Pages\LeadCaptureSettingsPage`)
+- Settings (`App\Settings\LeadCaptureSettings`)
+  - `country_auto_adjust_enabled` (bool):
+    - ON: autodetect country (or use selection) and validate against that region.
+    - OFF: force `priority_country` and lock the phone widget (hide country dropdown).
+  - `priority_country` (ISO2): GB, US, IL, AE supported out of the box.
+- Validation
+  - Server-side (libphonenumber): requires valid mobile (or fixed_line_or_mobile) for the active region; normalizes to E.164 components.
+  - Client-side: basic country-aware regex to give instant feedback; server remains the source of truth.
+  - The phone input is `type="tel"` to preserve leading zeros (e.g., UK `07…`).
 
 - Data & Seeders
   - `AdminSeeder` reads `ADMIN_NAME|EMAIL|PASSWORD` from `.env` and promotes the user to admin.
@@ -610,6 +630,11 @@ php artisan optimize
   - Generate SSH key on server, add to GitHub Deploy keys, and test with `ssh -T git@github.com`.
 - HTTP 500 after deploy
   - Check `storage/logs/laravel.log`; verify `.env` DB credentials; ensure `.htaccess` rewrites to `/public`.
+
+- 422 on `/leads` (valid-looking but still rejected)
+  - Ensure the number matches the active country. In forced‑GB mode, PH/US formats will fail.
+  - Ofcom drama/test numbers (e.g., `07700 900123`) are treated as non‑assignable by libphonenumber and will fail.
+  - Don’t type `+44` inside the input; the UI already supplies the prefix via a hidden field.
 
 - Filament delete action classes not found
   - Ensure Filament v4 subpackages are installed and autoloaded:

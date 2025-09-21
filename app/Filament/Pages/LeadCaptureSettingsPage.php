@@ -4,8 +4,9 @@ namespace App\Filament\Pages;
 
 use App\Settings\LeadCaptureSettings;
 use Filament\Forms;
-use Filament\Schemas\Schema;
+use Filament\Forms\Get;
 use Filament\Pages\SettingsPage;
+use Filament\Schemas\Schema;
 
 class LeadCaptureSettingsPage extends SettingsPage
 {
@@ -33,6 +34,25 @@ class LeadCaptureSettingsPage extends SettingsPage
                 ->url()
                 ->required()
                 ->helperText('External URL to send users to after successful signup when auto-login is OFF.'),
+
+            Forms\Components\Toggle::make('country_auto_adjust_enabled')
+                ->label('Enable worldwide auto country code & flag')
+                ->default(true)
+                ->helperText('When enabled, the homepage will auto-adjust the country flag and dialing code based on geo/middleware. When disabled, the Priority Country below is enforced for all visitors.')
+                ->live(),
+
+            Forms\Components\Select::make('priority_country')
+                ->label('Priority Country (when auto-adjust is disabled)')
+                ->options([
+                    'GB' => 'United Kingdom',
+                    'US' => 'United States',
+                    'IL' => 'Israel',
+                    'AE' => 'United Arab Emirates',
+                ])
+                ->default('GB')
+                ->native(false)
+                ->disabled(fn ($get) => (bool) $get('country_auto_adjust_enabled'))
+                ->helperText('When auto-adjust is OFF, force this country\'s flag/dial code on the form, and validate numbers for this region.'),
         ]);
     }
 }

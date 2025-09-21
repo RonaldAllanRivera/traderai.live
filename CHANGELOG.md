@@ -1,3 +1,23 @@
+## [0.3.9] - 2025-09-21
+
+### Added
+- Lead Capture Settings: country_auto_adjust_enabled and priority_country (Spatie Settings + DB migration).
+- Server-side phone validation with giggsey/libphonenumber-for-php: accepts MOBILE and FIXED_LINE_OR_MOBILE; enforces target region; normalizes to E.164 split (prefix + national).
+- Forced-country mode: hides the intl-tel-input dropdown and locks the flag/dial to the Priority Country.
+- AJAX error surfacing on the public form: shows first server validation error inline; maps to phone/email and disables the green check when invalid.
+- Throttle for POST /leads (20 requests/minute) to mitigate abuse.
+
+### Changed
+- Filament Settings page aligned to installed version: Schema signature retained and unavailable components removed.
+- Homepage template: compute and expose meta isoCode + forceCountry; JS respects force mode and fixes override logic.
+- Phone input switched to type="tel" (preserve leading zero such as UK 07… number).
+- LeadsController normalization prefers building E.164 from phone_prefix + phone_number to avoid locale pitfalls.
+
+### Fixed
+- Green check icon incorrectly showing on invalid numbers; now hidden and error displayed when invalid.
+- Filament closure Get type mismatch; visibility logic updated to avoid type issues.
+- Duplicate meta apply in override path; 422 responses now show helpful messages in the UI.
+
 ## [0.3.8] - 2025-09-19
 
 ### Added
