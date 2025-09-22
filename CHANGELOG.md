@@ -1,3 +1,19 @@
+## [0.3.14] - 2025-09-22
+
+### Added
+- FXDTradingAI public template:
+  - Restored missing sections from the original static template: "As Easy As 1.2.3" steps, sidebar with share/related articles, comments, and footer.
+  - Restored bottom scripts: mobile menu toggle, newsletter stub, NEXT-button handler, smooth scroll to contact, SweetAlert message handler, Turnstile loader, and Meta Pixel snippet.
+
+### Changed
+- FXDTradingAI phone field UX aligned with TraderAI template:
+  - Removed the legacy country dropdown; `intl-tel-input` now solely manages flag and dial code on the phone input.
+  - Hidden fields `phone_prefix` and `country` are synchronized from the widget.
+  - When Lead Capture Settings force a Priority Country, the phone widget is locked to that ISO and the flag/dial cannot be changed.
+
+### Fixed
+- Prevented confusion from dual country inputs by eliminating the unused dropdown in FXDTradingAI, ensuring consistent lead payload: `first_name`, `last_name`, `email`, `phone_number`, `phone_prefix`, `country`.
+
 ## [0.3.13] - 2025-09-22
 
 ### Added

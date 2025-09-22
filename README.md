@@ -214,6 +214,18 @@ The public site supports multiple admin-selectable templates. Legacy public land
 
 Routes are declared in `routes/web.php`.
 
+### Template Notes: FXDTradingAI
+
+- Phone field
+  - The legacy country `<select>` has been removed. The phone widget is now driven solely by `intl-tel-input` on the `phone_number` field with `separateDialCode` enabled.
+  - Hidden inputs `phone_prefix` and `country` stay synchronized with the selected country. Server validation keeps building E.164 from these values.
+  - When Lead Capture Settings force a Priority Country, the widget is locked to that ISO and users cannot change the flag/dial.
+  - To change behavior: Admin → System → Lead Capture → toggle Auto Country Adjust or set Priority Country.
+
+- Restored sections
+  - Re-added content removed during Blade conversion: "As Easy As 1.2.3" steps, sidebar (share + related), comments block, footer, and bottom scripts (menu toggle, newsletter stub, smooth scroll, SweetAlert message handler, Turnstile, and Meta Pixel).
+  - These live in `resources/views/fxdtradingai-template/home.blade.php` and mirror the original static `index.html`.
+
 ## Authentication (Admin only)
 
 - Admin authentication is fully managed by Filament under `/admin/*`.

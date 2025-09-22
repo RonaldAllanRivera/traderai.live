@@ -24,10 +24,10 @@ class SetCspHeaders
         if ($isAdminRoute) {
             // Admin CSP: includes 'unsafe-eval' for Livewire/Alpine.js
             $csp = "default-src 'self'; " .
-                   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://*.livecoinwatch.com https://cdnjs.cloudflare.com https://snap.licdn.com; " .
-                   "style-src 'self' 'unsafe-inline' data: https://cdnjs.cloudflare.com; " .
+                   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://*.livecoinwatch.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://snap.licdn.com; " .
+                   "style-src 'self' 'unsafe-inline' data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.googleapis.com; " .
                    "img-src 'self' data: blob: https:; " .
-                   "font-src 'self' data:; " .
+                   "font-src 'self' data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.gstatic.com; " .
                    "connect-src 'self' https://*.livecoinwatch.com https://px.ads.linkedin.com https://challenges.cloudflare.com; " .
                    "frame-src 'self' https://challenges.cloudflare.com; " .
                    "media-src 'self' data: blob:; " .
@@ -39,10 +39,10 @@ class SetCspHeaders
         } else {
             // Public CSP: stricter (no unsafe-eval)
             $csp = "default-src 'self'; " .
-                   "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://*.livecoinwatch.com https://cdnjs.cloudflare.com https://snap.licdn.com; " .
-                   "style-src 'self' 'unsafe-inline' data: https://cdnjs.cloudflare.com; " .
+                   "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://*.livecoinwatch.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://snap.licdn.com; " .
+                   "style-src 'self' 'unsafe-inline' data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.googleapis.com; " .
                    "img-src 'self' data: blob: https:; " .
-                   "font-src 'self' data:; " .
+                   "font-src 'self' data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.gstatic.com; " .
                    "connect-src 'self' https://*.livecoinwatch.com https://px.ads.linkedin.com https://challenges.cloudflare.com; " .
                    "frame-src 'self' https://challenges.cloudflare.com; " .
                    "media-src 'self' data: blob:; " .
