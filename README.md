@@ -193,12 +193,17 @@ Open http://traderai.live.test in your browser.
 
 ## Public Pages (Current)
 
-The public site now serves only TraderAI template pages. Legacy public landing/auth pages were removed.
+The public site supports multiple admin-selectable templates. Legacy public landing/auth pages were removed.
 
-- TraderAI template pages (dynamic)
-  - `resources/views/traderai-template/home.blade.php` → `/`
-  - `resources/views/traderai-template/safe.blade.php` → `/safe`
-  - `resources/views/traderai-template/redirect.blade.php` → `/redirect`
+- Available templates
+  - TraderAI (slug: `traderai-template`)
+    - `resources/views/traderai-template/home.blade.php` → `/`
+    - `resources/views/traderai-template/safe.blade.php` → `/safe`
+    - `resources/views/traderai-template/redirect.blade.php` → `/redirect`
+  - FXDTradingAI (slug: `fxdtradingai-template`)
+    - `resources/views/fxdtradingai-template/home.blade.php` → `/`
+    - `resources/views/fxdtradingai-template/safe.blade.php` → `/safe`
+    - `resources/views/fxdtradingai-template/redirect.blade.php` → `/redirect`
   - Active template is selected in Admin → System → Appearance (Filament), stored in `SiteAppearanceSettings.public_template`.
   - The controller `App\\Http\\Controllers\\PublicPagesController` resolves the current template and renders `"{template}.home"`, `"{template}.safe"`, and `"{template}.redirect"`.
   - Template registry lives in `config/templates.php` to whitelist available template folders and labels.
@@ -819,6 +824,15 @@ TURNSTILE_TIMEOUT=5
   - Client-side phone flag/dial sync with robust fallbacks and 10s enforcement.
   - `geo_debug=1` green overlay (server-rendered) for quick verification.
   - Dynamic registration notice wired to the same override, using the CSS sprite flag for Chrome-safe rendering.
+
+### 2025-09-22
+- New public template: FXDTradingAI
+  - Added registry entry in `config/templates.php` under `available`:
+    - `'fxdtradingai-template' => ['label' => 'FXDTradingAI', 'views' => ['home','safe','redirect']]`
+  - Views folder: `resources/views/fxdtradingai-template/` (requires `home.blade.php`, `safe.blade.php`, `redirect.blade.php`).
+  - Assets folder: `public/fxdtradingai-template/` (CSS/JS/images/fonts/video/etc.).
+  - Admin → System → Appearance reads from `config('templates.available')`, so the new template appears automatically in the dropdown. After saving, compiled views are cleared for immediate effect.
+  - `PublicPagesController` passes a per-template `$assetBase` to views; ensure each template includes `<base href="{{ $assetBase }}">` at the top of `<head>`.
 
 ## License
 
