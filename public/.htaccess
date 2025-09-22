@@ -5,21 +5,9 @@
 
     RewriteEngine On
 
-    <IfModule mod_headers.c>
-    Header set Content-Security-Policy "default-src 'self'; \
-        script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://*.livecoinwatch.com https://cdnjs.cloudflare.com https://snap.licdn.com; \
-        style-src 'self' 'unsafe-inline' data: https://cdnjs.cloudflare.com; \
-        img-src 'self' data: blob: https:; \
-        font-src 'self' data:; \
-        connect-src 'self' https://*.livecoinwatch.com https://px.ads.linkedin.com https://challenges.cloudflare.com; \
-        frame-src 'self' https://challenges.cloudflare.com; \
-        media-src 'self' data: blob:; \
-        worker-src 'self' blob:; \
-        frame-ancestors 'self'; \
-        object-src 'none'; \
-        base-uri 'self'; \
-        form-action 'self'"
-    </IfModule>
+    # public/.htaccess
+
+    # CSP will be handled by PHP middleware for better conditional control
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .

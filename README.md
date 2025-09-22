@@ -29,6 +29,7 @@ Production‑ready Laravel 12 app with a modern Filament 4 admin and a dynamic p
 - [Troubleshooting](#troubleshooting)
  - [Troubleshooting Note: 422 with Ofcom test numbers](#troubleshooting-note-422-with-ofcom-test-numbers)
 - [Bot Protection (Cloudflare Turnstile)](#bot-protection-cloudflare-turnstile)
+- [Security (Content Security Policy)](#security-content-security-policy)
 - [Changelog](#changelog)
 - [License](#license)
 
@@ -481,6 +482,34 @@ Open:
   - Middleware `App\Http\Middleware\EnsureAdmin` redirects non-admin authenticated users away from `/admin/*` to `/dashboard`.
 - Admin login page includes a “Forgot your password?” link that uses the same reset flow as public users.
 - Roadmap: migrate to a dedicated Admin guard + model when needed.
+
+## Security (Content Security Policy)
+
+This project enforces Content Security Policy (CSP) via a Laravel middleware for robust, conditional control instead of static Apache rules.
+
+- Implementation
+  - Middleware: `app/Http/Middleware/SetCspHeaders.php`.
+  - Registration: globally appended in `bootstrap/app.php` using `$middleware->append(App\Http\Middleware\SetCspHeaders::class)`.
+  - Admin detection: prefers `routeIs('filament.admin.*')` (Filament 4 panel id `admin`), with a fallback check for the `admin` path prefix.
+  - Apache: `public/.htaccess` no longer sets CSP headers.
+
+- Policies
+  - Admin routes (Filament panel `admin`): allows `'unsafe-eval'` in `script-src` to support Livewire/Alpine where needed.
+  - Public routes: stricter CSP without `'unsafe-eval'`.
+
+- How to test
+  1) Visit a public page like `/`.
+     - In DevTools → Network → select the document → Headers, confirm `Content-Security-Policy` exists and `script-src` does NOT include `'unsafe-eval'`.
+  2) Visit `/admin/login` (or any Filament admin page).
+     - Confirm `Content-Security-Policy` exists and `script-src` DOES include `'unsafe-eval'`.
+  3) If you update the middleware, clear caches:
+     ```bash
+     php artisan optimize:clear
+     ```
+
+- Adjustments
+  - To allow new vendors/domains, edit the allowlists inside `SetCspHeaders` under each policy block.
+  - If you rename the Filament panel id from `admin`, update the route pattern in `isAdminRoute()` accordingly (e.g., `filament.backoffice.*`).
 
 ## Admin Password Reset
 

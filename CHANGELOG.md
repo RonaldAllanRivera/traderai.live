@@ -1,3 +1,15 @@
+## [0.3.13] - 2025-09-22
+
+### Added
+- Conditional Content Security Policy via Laravel middleware `App\Http\Middleware\SetCspHeaders`.
+  - Admin routes (Filament panel id `admin`) allow `'unsafe-eval'` for Livewire/Alpine.
+  - Public routes use a stricter policy without `'unsafe-eval'`.
+
+### Changed
+- Removed CSP header management from `public/.htaccess`; CSP is now handled in PHP for robust, conditional control.
+- Registered the CSP middleware globally in `bootstrap/app.php`.
+- README updated with a new Security → CSP section and testing steps.
+
 ## [0.3.12] - 2025-09-22
 
 ### Changed

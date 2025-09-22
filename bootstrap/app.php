@@ -11,6 +11,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Global middleware
+        $middleware->append(\App\Http\Middleware\SetCspHeaders::class);
+        
         // Route middleware aliases
         $middleware->alias([
             'resolve.country' => \App\Http\Middleware\ResolveCountryMiddleware::class,
