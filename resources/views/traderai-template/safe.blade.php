@@ -96,7 +96,7 @@
     <div class="row align-items-center">
      <div class="col-lg-7">
       <div class="video-wrapper">
-       <div style="position:relative;width:100%;overflow:hidden;padding-top:56.25%;margin-top: 20px">
+       <div style="position:relative;width:100%;overflow:hidden;padding-top:56.25%;margin-top: 20px;border: 3px solid #000;">
         <video autoplay="" class="video-js vjs-big-play-centered" controls="" data-setup="{}" height="264" id="videoPlayer" loop="" muted="" poster="" preload="auto" style="position:absolute;bottom:0;width:100%;height:100%;" width="auto">
          <source src="video/AutoTradingStrategyForCrypto.mp4" type="video/mp4">
          </source>

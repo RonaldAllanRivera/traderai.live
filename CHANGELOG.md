@@ -1,3 +1,17 @@
+## [0.3.12] - 2025-09-22
+
+### Changed
+- TraderAI public template: updated header/logo image.
+- Home and Safe pages: added a visible 3px black border to the public video container for clarity.
+
+### Fixed
+- Content Security Policy tuned for active integrations:
+  - Allow cdnjs for intl-tel-input (script, style, images).
+  - Allow LinkedIn Insight: script (snap.licdn.com) and attribution connect (px.ads.linkedin.com).
+  - Allow Facebook Pixel image beacons (www.facebook.com/tr).
+  - Allow Turnstile images (challenges.cloudflare.com).
+  - Broadened img-src to allow HTTPS images during integration to avoid spurious blocks.
+
 ## [0.3.11] - 2025-09-22
 
 ### Added
