@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
  <head>
-  <base href="{{ asset('traderai-template/') }}/">
+  <base href="{{ $assetBase }}">
   <link href="css/video-js.css" rel="stylesheet"/>
   <meta content="{{ strtoupper(request('__country', request('geo', 'PH'))) }}" name="isoCode"/>
   <meta charset="utf-8"/>

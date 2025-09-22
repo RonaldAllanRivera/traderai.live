@@ -1,3 +1,20 @@
+## [0.3.11] - 2025-09-22
+
+### Added
+- README tutorial: migrating template assets from `landing-page/` to `public/{slug}/`, with PowerShell copy commands.
+- Folder-specific Apache rules: `public/traderai-template/.htaccess` with `Options -Indexes` and `DirectoryIndex index.html`.
+- Stub `public/traderai-template/index.html` to avoid directory URL redirect loops when the browser requests `/traderai-template/` directly.
+
+### Changed
+- Public templates now receive a dynamic `$assetBase` from `PublicPagesController` so views don’t hardcode the slug.
+  - `home()`, `safe()`, and `redirect()` pass `['assetBase' => asset($slug . '/')]` where `$slug` is the selected or fallback template.
+  - `resources/views/traderai-template/home.blade.php` and `safe.blade.php` now use `<base href="{{ $assetBase }}">`.
+- README updated with “Template Assets (Migration and Best Practices)” section and alignment to `public/{slug}/` convention.
+
+### Fixed
+- 404s for JS/CSS/images after removing `landing-page/` by moving assets under `public/traderai-template/`.
+- `net::ERR_TOO_MANY_REDIRECTS` when accessing `/traderai-template/` by providing a folder-level `index.html` and `.htaccess`.
+
 ## [0.3.10] - 2025-09-21
 
 ### Changed

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
  <head>
-  <base href="{{ asset('traderai-template/') }}/">
+  <base href="{{ $assetBase }}">
   <link href="css/video-js.css" rel="stylesheet"/>
   @php
     try { $leadSettings = app(\App\Settings\LeadCaptureSettings::class); } catch (\Throwable $e) { $leadSettings = null; }
@@ -709,12 +709,10 @@
     .force-no-country .iti__country-list { display: none !important; }
   </style>
   @endif
-   <script data-cfasync="false" src="js/email-decode.min.js">
-   </script>
-   <script src="js/main.js" type="text/javascript">
-   </script>
-   <script src="js/jquery-3.5.1.min.js" type="text/javascript">
-   </script>
+   <script data-cfasync="false" src="js/email-decode.min.js"></script>
+  <!-- Load jQuery before any script that depends on it -->
+  <script src="js/jquery-3.5.1.min.js" type="text/javascript"></script>
+  <script src="js/main.js" type="text/javascript"></script>
   <script>
     // Countdown
     function startTimer(duration, display) {

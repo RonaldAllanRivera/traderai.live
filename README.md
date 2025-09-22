@@ -19,6 +19,7 @@ Production‑ready Laravel 12 app with a modern Filament 4 admin and a dynamic p
 - [Features](#features)
 - [Public Pages (Current)](#public-pages-current)
 - [Template Selection (Appearance)](#template-selection-appearance)
+- [Template Assets (Migration and Best Practices)](#template-assets-migration-and-best-practices)
 - [Local Development](#local-development)
 - [Admin Notes](#admin-notes)
 - [Testing Tutorial (Step-by-step)](#testing-tutorial-step-by-step)
@@ -125,7 +126,7 @@ Open http://traderai.live.test in your browser.
 - Public Landing Layer (Dynamic Templates)
   - Admin-selectable template under Admin → System → Appearance.
   - Routes stay static; controller renders `"{template}.home|safe|redirect"`.
-  - Production-ready static assets; per-template assets recommended under `public/templates/{slug}/`.
+  - Production-ready static assets; per-template assets recommended under `public/{slug}/`.
 
 - Lead Capture & Redirect Flow
   - Sign-up posts to `POST /leads`; creates a `Lead` and a matching `User` if not existing.
@@ -238,9 +239,91 @@ Add a new template
 - Select it in Admin → System → Appearance.
 
 Notes & best practices
-- Keep per-template assets under `public/templates/{slug}/` and include them inside the template blades.
+- Keep per-template assets under `public/{slug}/` and include them inside the template blades.
 - Maintain consistent view names (home, safe, redirect) across templates to swap seamlessly.
 - Routes stay static; only the controller decides which template to render.
+
+## Template Assets (Migration and Best Practices)
+
+This app serves public pages from Blade templates under `resources/views/{slug}/` and expects static assets for each template under `public/{slug}/`.
+
+The active template slug is resolved by `App\Http\Controllers\PublicPagesController`, and the views receive a dynamic `$assetBase` that points to `asset("{slug}/")`. The base tag in each template is:
+
+```blade
+<base href="{{ $assetBase }}">
+```
+
+### How we migrated assets from `landing-page/`
+
+Goal: move static assets into the public directory so `{{ asset('{slug}/') }}` can serve them directly.
+
+1) Create target folders (PowerShell example)
+```powershell
+New-Item -ItemType Directory -Force -Path "E:\laragon\www\traderai.live\public\traderai-template\css" | Out-Null
+New-Item -ItemType Directory -Force -Path "E:\laragon\www\traderai.live\public\traderai-template\js" | Out-Null
+New-Item -ItemType Directory -Force -Path "E:\laragon\www\traderai.live\public\traderai-template\img" | Out-Null
+New-Item -ItemType Directory -Force -Path "E:\laragon\www\traderai.live\public\traderai-template\fonts" | Out-Null
+New-Item -ItemType Directory -Force -Path "E:\laragon\www\traderai.live\public\traderai-template\other" | Out-Null
+New-Item -ItemType Directory -Force -Path "E:\laragon\www\traderai.live\public\traderai-template\video" | Out-Null
+New-Item -ItemType Directory -Force -Path "E:\laragon\www\traderai.live\public\traderai-template\css_img" | Out-Null
+```
+
+2) Copy assets from the legacy folder (keep subfolder names)
+```powershell
+robocopy "E:\laragon\www\traderai.live\landing-page\css"     "E:\laragon\www\traderai.live\public\traderai-template\css" /E
+robocopy "E:\laragon\www\traderai.live\landing-page\js"      "E:\laragon\www\traderai.live\public\traderai-template\js" /E
+robocopy "E:\laragon\www\traderai.live\landing-page\img"     "E:\laragon\www\traderai.live\public\traderai-template\img" /E
+robocopy "E:\laragon\www\traderai.live\landing-page\fonts"   "E:\laragon\www\traderai.live\public\traderai-template\fonts" /E
+robocopy "E:\laragon\www\traderai.live\landing-page\other"   "E:\laragon\www\traderai.live\public\traderai-template\other" /E
+robocopy "E:\laragon\www\traderai.live\landing-page\video"   "E:\laragon\www\traderai.live\public\traderai-template\video" /E
+robocopy "E:\laragon\www\traderai.live\landing-page\css_img" "E:\laragon\www\traderai.live\public\traderai-template\css_img" /E
+```
+
+3) Do NOT copy `landing-page/index.php`
+
+- `routes/web.php` already preserves old form actions with a server-side redirect:
+  ```php
+  // Route excerpt
+  Route::match(['GET','POST'], '/{template}/index.php', function () {
+      return redirect()->to(route('home') . '#req-form-section');
+  })->where(['template' => '[A-Za-z0-9\-]+'])->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
+  ```
+
+### Prevent redirect loops on `/traderai-template/`
+
+Some browsers request the base URL directory directly when you set `<base href="/traderai-template/">`. To avoid 301/302 loops under Apache, add an `.htaccess` and a stub index file inside the assets folder:
+
+- File: `public/traderai-template/.htaccess`
+  ```apache
+  Options -Indexes
+  DirectoryIndex index.html
+  ```
+
+- File: `public/traderai-template/index.html`
+  ```html
+  <!doctype html><meta charset="utf-8"><title>assets</title>
+  ```
+
+Clear browser cache if a 301 was cached, then reload.
+
+### Dynamic base URL per template (implemented)
+
+- Controller (`App\Http\Controllers\PublicPagesController`):
+  - Each of `home()`, `safe()`, `redirect()` computes `$slug` for the selected/fallback template and passes `['assetBase' => asset($slug . '/')]` to the view.
+- Views (`resources/views/{slug}/home.blade.php`, `safe.blade.php`):
+  - Replace the hardcoded `<base href="{{ asset('traderai-template/') }}/">` with `<base href="{{ $assetBase }}">`.
+
+This lets you add more templates without touching the Blade base URLs.
+
+### Troubleshooting 404s after moving assets
+
+- Check that files exist under `public/{slug}/...` (e.g., `/traderai-template/js/jquery-3.5.1.min.js`).
+- Ensure the `<base>` tag is present as the very first resource tag in `<head>`.
+- Hard refresh with cache disabled in DevTools.
+- If Laravel caches are stale after editing views/config, run:
+  ```bash
+  php artisan optimize:clear && php artisan optimize
+  ```
 
 ### How to add a new template
 

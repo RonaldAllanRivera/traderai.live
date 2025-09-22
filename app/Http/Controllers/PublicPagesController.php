@@ -25,30 +25,42 @@ class PublicPagesController extends Controller
     public function home(Request $request)
     {
         $tpl = $this->resolveTemplate();
+        $slug = $tpl;
         $view = $tpl . '.home';
         if (! view()->exists($view)) {
-            $view = config('templates.default', 'traderai-template') . '.home';
+            $slug = (string) config('templates.default', 'traderai-template');
+            $view = $slug . '.home';
         }
-        return view($view);
+        return view($view, [
+            'assetBase' => rtrim(request()->getSchemeAndHttpHost(), '/') . '/' . trim($slug, '/') . '/',
+        ]);
     }
 
     public function safe()
     {
         $tpl = $this->resolveTemplate();
+        $slug = $tpl;
         $view = $tpl . '.safe';
         if (! view()->exists($view)) {
-            $view = config('templates.default', 'traderai-template') . '.safe';
+            $slug = (string) config('templates.default', 'traderai-template');
+            $view = $slug . '.safe';
         }
-        return view($view);
+        return view($view, [
+            'assetBase' => rtrim(request()->getSchemeAndHttpHost(), '/') . '/' . trim($slug, '/') . '/',
+        ]);
     }
 
     public function redirect()
     {
         $tpl = $this->resolveTemplate();
+        $slug = $tpl;
         $view = $tpl . '.redirect';
         if (! view()->exists($view)) {
-            $view = config('templates.default', 'traderai-template') . '.redirect';
+            $slug = (string) config('templates.default', 'traderai-template');
+            $view = $slug . '.redirect';
         }
-        return view($view);
+        return view($view, [
+            'assetBase' => rtrim(request()->getSchemeAndHttpHost(), '/') . '/' . trim($slug, '/') . '/',
+        ]);
     }
 }

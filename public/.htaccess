@@ -5,6 +5,22 @@
 
     RewriteEngine On
 
+    <IfModule mod_headers.c>
+    Header set Content-Security-Policy "default-src 'self'; \
+        script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://*.livecoinwatch.com; \
+        style-src 'self' 'unsafe-inline'; \
+        img-src 'self' data: blob: https://*.livecoinwatch.com; \
+        font-src 'self' data:; \
+        connect-src 'self' https://*.livecoinwatch.com; \
+        frame-src 'self' https://challenges.cloudflare.com; \
+        media-src 'self' data: blob:; \
+        worker-src 'self' blob:; \
+        frame-ancestors 'self'; \
+        object-src 'none'; \
+        base-uri 'self'; \
+        form-action 'self'"
+    </IfModule>
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
