@@ -692,12 +692,36 @@ By default, when a blacklist rule matches, users are redirected to `route('safe'
   'cloaking_enabled' => env('CLOAKING_ENABLED', true),
   ```
 
+### Cloaker URL Configuration
+
+The cloaker URLs are now environment-aware and use the `APP_URL` from your `.env` file to generate correct URLs for each environment.
+
+- **Local Development**: Uses `APP_URL=http://traderai.live.test` (or your local URL)
+- **Production**: Uses `APP_URL=https://traderai.live`
+
+#### URL Generation
+- Cloaker rules are seeded using `config('app.url')` instead of hardcoded URLs
+- This ensures that test links and redirects always use the correct base URL for the current environment
+- Example URLs generated:
+  - Local: `http://traderai.live.test/safe?__ua=Googlebot`
+  - Production: `https://traderai.live/safe?__ua=Googlebot`
+
+#### Applying URL Updates
+If you need to update existing cloak rules with the correct URLs:
+
+```bash
+# Re-seed cloak rules to use current APP_URL
+php artisan db:seed --class=Database\Seeders\CloakRuleSeeder
+```
+
+This will update all cloak rule `safe_url` and `offer_url` fields to use the current `APP_URL` configuration.
+
 ### Geo & Phone Override Test
 
-1) From Filament → Marketing → `Cloaker` → `Test Cloaker`, choose a country and click “Run on route /”.
+1) From Filament → Marketing → `Cloaker` → `Test Cloaker`, choose a country and click "Run on route /".
 2) Expected on `/` (`resources/views/traderai-template/home.blade.php`):
    - The phone input shows the corresponding flag and dial (e.g., `+1` for US) within ~0–2 seconds (enforced up to 10s).
-   - The notice under the phone field reads: “Currently only [flag sprite] [Country Name] Nationals can register.”
+   - The notice under the phone field reads: "Currently only [flag sprite] [Country Name] Nationals can register."
 3) Try switching to SG/PH/GB. The flag (CSS sprite) and dial update accordingly; hidden `area_code` pre-seeds server-side.
 4) If a cloaker redirect occurs, the override is preserved by middleware so the view receives it.
 
@@ -718,6 +742,127 @@ UI consistency:
 
 This project is set up to work on Namecheap shared hosting where you cannot change the document root. We will clone directly into `public_html` and use a root `.htaccess` to forward traffic to `public/`.
 
+### 🚀 Quick Start: New Clean Deployment Tutorial
+
+This tutorial is for **fresh installations** on empty domains or when you want to completely replace existing content.
+
+#### Step 1: SSH into Your Namecheap Account
+```bash
+ssh USER@SERVER
+```
+
+#### Step 2: Backup and Clean public_html (Optional but Recommended)
+```bash
+# Backup existing files (if any)
+mv public_html public_html_backup_$(date +%Y%m%d_%H%M%S)
+
+# Create fresh public_html directory
+mkdir public_html
+cd public_html
+```
+
+#### Step 3: Set Up SSH Keys (One-time Setup)
+```bash
+# Generate SSH key (press Enter for defaults)
+ssh-keygen -t ed25519 -C "your_email@example.com"
+
+# Start SSH agent
+eval "$(ssh-agent -s)"
+
+# Add key to SSH agent
+ssh-add ~/.ssh/id_ed25519
+
+# Copy public key to clipboard
+cat ~/.ssh/id_ed25519.pub
+```
+
+**Now add the copied public key to GitHub:**
+1. Go to GitHub → Settings → SSH and GPG keys
+2. Click "New SSH key"
+3. Paste the public key and give it a descriptive name
+4. Click "Add SSH key"
+
+#### Step 4: Test SSH Connection
+```bash
+ssh -T git@github.com
+```
+You should see: "Hi RonaldAllanRivera! You've successfully authenticated..."
+
+#### Step 5: Clone the Repository
+```bash
+cd ~/public_html
+git clone --depth 1 git@github.com:RonaldAllanRivera/traderai.live.git .
+```
+
+#### Step 6: Configure Environment
+```bash
+# Copy environment file
+cp .env.example .env
+
+# Set your domain
+sed -i 's|APP_URL=.*|APP_URL=https://YOUR_DOMAIN|' .env
+
+# Edit environment file
+nano .env
+```
+**Set these values in `.env`:**
+- `APP_NAME=YourAppName`
+- `APP_ENV=production`
+- `APP_DEBUG=false`
+- `DB_DATABASE=your_database_name`
+- `DB_USERNAME=your_database_user`
+- `DB_PASSWORD=your_database_password`
+- `MAIL_*` settings for email
+
+#### Step 7: Install Dependencies and Optimize
+```bash
+# Install PHP dependencies
+composer install --no-dev --optimize-autoloader
+
+# Generate application key
+php artisan key:generate --force
+
+# Create storage link
+php artisan storage:link
+
+# Run migrations
+php artisan migrate --force
+
+# Run seeders (optional)
+php artisan db:seed --force
+
+# Clear and cache configurations
+php artisan config:clear
+php artisan config:cache
+php artisan route:clear
+php artisan route:cache
+php artisan view:clear
+php artisan view:cache
+```
+
+#### Step 8: Set File Permissions
+```bash
+# Set proper permissions
+chmod -R 755 storage
+chmod -R 755 bootstrap/cache
+chown -R USER:USER .  # Replace USER with your cPanel username
+```
+
+#### Step 9: Verify Deployment
+```bash
+# Check Laravel installation
+php artisan --version
+
+# Test routes
+php artisan route:list
+```
+
+**Your application should now be live at your domain!** 🎉
+
+---
+
+### Important: Deploying to Non-Empty public_html
+
 ### Important: Deploying to Non-Empty public_html
 **If your `public_html` directory is not empty** (e.g., existing website, default files), you have two options:
 
@@ -736,12 +881,55 @@ This project is set up to work on Namecheap shared hosting where you cannot chan
 - Add that public key to GitHub (Deploy key on the repo, or to your GitHub account) so you can use the SSH clone URL.
 
 2) First-time deploy (clone into public_html)
+
+**For EMPTY public_html (Fresh Install):**
 ```bash
 # SSH into your Namecheap account
 ssh USER@SERVER
 
 cd ~/public_html
 git clone --depth 1 git@github.com:RonaldAllanRivera/traderai.live.git .
+```
+
+**For NON-EMPTY public_html (Existing Files):**
+```bash
+# SSH into your Namecheap account
+ssh USER@SERVER
+
+# Option A: Clean Deploy (Recommended)
+mv public_html public_html_backup
+mkdir public_html
+cd public_html
+git clone --depth 1 git@github.com:RonaldAllanRivera/traderai.live.git .
+
+# Option B: Merge Deploy (Advanced)
+cd ~/public_html
+# WARNING: Manually remove conflicting files/folders first
+git init
+git remote add origin git@github.com:RonaldAllanRivera/traderai.live.git
+
+# IMPORTANT: Verify SSH connection before pulling
+ssh -T git@github.com
+# If you see "Permission denied (publickey)", you need to set up SSH keys:
+# 1. Generate SSH key: ssh-keygen -t ed25519 -C "your_email@example.com"
+# 2. Start SSH agent: eval "$(ssh-agent -s)"
+# 3. Add key: ssh-add ~/.ssh/id_ed25519
+# 4. Copy public key: cat ~/.ssh/id_ed25519.pub
+# 5. Add to GitHub: Settings → SSH and GPG keys → New SSH key
+# 6. Test again: ssh -T git@github.com
+
+# After SSH is working, pull the repository
+git pull origin main --force  # This may overwrite existing files!
+```
+
+**Alternative: Use HTTPS (No SSH Keys Required)**
+```bash
+cd ~/public_html
+git init
+git remote add origin https://github.com/RonaldAllanRivera/traderai.live.git
+git pull origin main --force
+# You'll be prompted for GitHub username and personal access token
+```
 
 # Environment
 cp .env.example .env

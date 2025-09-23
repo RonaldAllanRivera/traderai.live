@@ -9,6 +9,6 @@ class PixelSeeder extends Seeder
 {
     public function run(): void
     {
-        Pixel::factory()->count(5)->create();
+        Pixel::factory()->count(2)->create();
     }
 }

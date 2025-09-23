@@ -1,3 +1,14 @@
+## [0.3.18] - 2025-06-24
+
+### Fixed
+- **Cloaker URL Redirection**: Fixed cloaker test links redirecting to local development URLs instead of production URLs:
+  - Updated `CloakRuleSeeder` to use `config('app.url')` instead of hardcoded URLs
+  - URLs are now environment-aware and use the `APP_URL` from `.env` file
+  - Local development: uses `APP_URL=http://traderai.live.test`
+  - Production: uses `APP_URL=https://traderai.live`
+  - Test links now generate correct URLs: `http://traderai.live.test/safe?__ua=Googlebot` (local) and `https://traderai.live/safe?__ua=Googlebot` (production)
+  - Added documentation for URL configuration and update procedures
+
 ## [0.3.17] - 2025-09-23
 
 ### Fixed

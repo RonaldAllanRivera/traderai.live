@@ -9,7 +9,7 @@ class LeadSeeder extends Seeder
 {
     public function run(): void
     {
-        $default = app()->environment('production') ? 5 : 15;
+        $default = app()->environment('production') ? 1 : 5;
         $count = (int) env('LEAD_COUNT', $default);
         Lead::factory()->count(max(0, $count))->create();
     }
