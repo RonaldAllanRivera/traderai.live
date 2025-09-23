@@ -1,3 +1,26 @@
+## [0.3.15] - 2025-09-23
+
+### Fixed
+- **Turnstile Widget Implementation**: Improved Cloudflare Turnstile integration with explicit rendering to prevent initialization issues and console errors
+  - Switched from automatic to explicit rendering (`render=explicit`) to control widget initialization timing
+  - Added proper container cleanup before each render to prevent conflicts and multiple instances
+  - Implemented conditional display logic that only renders the widget when the phone section becomes visible
+  - Enhanced error handling with graceful fallbacks and proper error logging
+  - Added automatic widget reset on back button navigation for clean retry experience
+  - Eliminated NaN console errors by preventing multiple render attempts and timing conflicts
+  - Updated widget container to remove automatic rendering attributes that could cause conflicts
+  - Improved user experience with reliable widget loading and proper state management
+
+### Added
+- **Turnstile Documentation**: Enhanced README with comprehensive Bot Protection section including:
+  - Detailed implementation details and architecture decisions
+  - Troubleshooting guide for common Turnstile issues (600010 errors, NaN errors)
+  - Explanation of console messages and which ones can be safely ignored
+  - Best practices for widget management and error handling
+
+### Changed
+- **Submit Button Styling**: Updated lead form submit button color from blue to green for better visual hierarchy
+
 ## [0.3.14] - 2025-09-22
 
 ### Added

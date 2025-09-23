@@ -24,33 +24,33 @@ class SetCspHeaders
         if ($isAdminRoute) {
             // Admin CSP: includes 'unsafe-eval' for Livewire/Alpine.js
             $csp = "default-src 'self'; " .
-                   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://*.livecoinwatch.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://snap.licdn.com; " .
+                   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://*.livecoinwatch.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://snap.licdn.com https://connect.facebook.net; " .
                    "style-src 'self' 'unsafe-inline' data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.googleapis.com; " .
                    "img-src 'self' data: blob: https:; " .
                    "font-src 'self' data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.gstatic.com; " .
-                   "connect-src 'self' https://*.livecoinwatch.com https://px.ads.linkedin.com https://challenges.cloudflare.com; " .
-                   "frame-src 'self' https://challenges.cloudflare.com; " .
+                   "connect-src 'self' https://*.livecoinwatch.com https://px.ads.linkedin.com https://challenges.cloudflare.com https://connect.facebook.net https://graph.facebook.com https://www.facebook.com https://mpc-prod-4-1053047382554.us-central1.run.app https://demo-1.conversionsapigateway.com; " .
+                   "frame-src 'self' https://challenges.cloudflare.com https://www.facebook.com; " .
                    "media-src 'self' data: blob:; " .
                    "worker-src 'self' blob:; " .
                    "frame-ancestors 'self'; " .
                    "object-src 'none'; " .
                    "base-uri 'self'; " .
-                   "form-action 'self'";
+                   "form-action 'self' https://www.facebook.com";
         } else {
             // Public CSP: stricter (no unsafe-eval)
             $csp = "default-src 'self'; " .
-                   "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://*.livecoinwatch.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://snap.licdn.com; " .
+                   "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://*.livecoinwatch.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://snap.licdn.com https://connect.facebook.net; " .
                    "style-src 'self' 'unsafe-inline' data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.googleapis.com; " .
                    "img-src 'self' data: blob: https:; " .
                    "font-src 'self' data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.gstatic.com; " .
-                   "connect-src 'self' https://*.livecoinwatch.com https://px.ads.linkedin.com https://challenges.cloudflare.com; " .
-                   "frame-src 'self' https://challenges.cloudflare.com; " .
+                   "connect-src 'self' https://*.livecoinwatch.com https://px.ads.linkedin.com https://challenges.cloudflare.com https://connect.facebook.net https://graph.facebook.com https://www.facebook.com https://mpc-prod-4-1053047382554.us-central1.run.app https://demo-1.conversionsapigateway.com; " .
+                   "frame-src 'self' https://challenges.cloudflare.com https://www.facebook.com; " .
                    "media-src 'self' data: blob:; " .
                    "worker-src 'self' blob:; " .
                    "frame-ancestors 'self'; " .
                    "object-src 'none'; " .
                    "base-uri 'self'; " .
-                   "form-action 'self'";
+                   "form-action 'self' https://www.facebook.com";
         }
         
         $response->headers->set('Content-Security-Policy', $csp);

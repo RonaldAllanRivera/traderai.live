@@ -226,6 +226,78 @@ Routes are declared in `routes/web.php`.
   - Re-added content removed during Blade conversion: "As Easy As 1.2.3" steps, sidebar (share + related), comments block, footer, and bottom scripts (menu toggle, newsletter stub, smooth scroll, SweetAlert message handler, Turnstile, and Meta Pixel).
   - These live in `resources/views/fxdtradingai-template/home.blade.php` and mirror the original static `index.html`.
 
+## Add a New Public Template: Implementation Checklist
+
+Use `resources/views/traderai-template/home.blade.php` as the reference for structure and behavior. New templates should follow the same conventions so they can be swapped via Admin → System → Appearance.
+
+- **Register the template**
+  - Add your slug and optional label/locales to `config/templates.php`.
+  - Ensure `App\Http\Controllers\PublicPagesController` will resolve to your view names: `"{template}.home"`, `"{template}.safe"`, `"{template}.redirect"`.
+
+- **Views to create**
+  - `resources/views/{slug}/home.blade.php` (primary landing with form)
+  - `resources/views/{slug}/safe.blade.php` (safe variant; no marketing pixels by default)
+  - `resources/views/{slug}/redirect.blade.php` (short splash with spinner/message; then forwards to external URL)
+
+- **Assets placement**
+  - Put static assets under `public/{slug}/` (img, js, css, video).
+  - In the controller, we pass `$assetBase = asset($slug . '/')` and every template must include `<base href="{{ $assetBase }}">` so all relative assets resolve.
+  - Optional: a folder-level `public/{slug}/.htaccess` with `Options -Indexes` and (if accessing the folder directly) `DirectoryIndex index.html`.
+
+- **Head setup**
+  - Add `<base href="{{ $assetBase }}">`.
+  - Compute geo and settings:
+    - Resolve ISO and dial code using the middleware-provided attributes or fallbacks, and Lead Capture Settings for forced-country mode.
+    - Expose `<meta name="isoCode" content="{{ $computedIso }}">` and `<meta name="forceCountry" content="{{ $forceCountry ? '1' : '0' }}">`.
+  - Inject Admin Pixels (head):
+    - Loop active pixels where `location = 'head'` exactly like TraderAI.
+
+- **Body start injection**
+  - Inject Admin Pixels (body_start) right after `<body>`.
+  - Keep the Safe page free of marketing pixels by default.
+
+- **Lead form and phone widget**
+  - Use a single phone input managed by `intl-tel-input` (CDN) with `separateDialCode: true`.
+  - Remove any legacy country dropdowns.
+  - Keep hidden fields synchronized: `phone_prefix` (calling code) and `country` (ISO2).
+  - Respect forced-country mode from Lead Capture Settings by locking the picker to the priority country.
+  - Show a concise country notice with flag and pretty name (see TraderAI/FXDTradingAI for examples).
+
+- **Cloudflare Turnstile (CAPTCHA)**
+  - Gate the widget on config: `@if(config('services.turnstile.enabled') && config('services.turnstile.site_key'))`.
+  - Markup: `<div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.site_key') }}"></div>`.
+  - Loader: `<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>` gated by the same condition.
+  - On server 422 errors, call `turnstile.reset()` and display the mapped message for `cf-turnstile-response`.
+
+- **AJAX submit (preferred)**
+  - Post to `route('leads.store')` with `Accept: application/json` and `X-Requested-With: XMLHttpRequest`.
+  - Map server 422 errors to fields (`email`, `phone_number`/`phone`, and `cf-turnstile-response`).
+  - On success: show a short thank-you and redirect to the internal `/redirect` splash with `?to=<external>&s=5&lead_id=...`.
+  - Throttling and validation are already applied server-side (`LeadsController@store`).
+
+- **Pixels injection (body_end)**
+  - Inject Admin Pixels (body_end) just before `</body>`.
+  - Do not hardcode tracking scripts in the template. Add them via Admin → Marketing → Pixels.
+
+- **CSP compatibility**
+  - Public CSP is enforced in `App\Http\Middleware\SetCspHeaders`.
+  - Prefer existing allowlists only. If you introduce new third-party scripts, update the CSP middleware accordingly (script-src/connect-src/frame-src as needed).
+  - For Cloudflare Turnstile, we already allow `https://challenges.cloudflare.com` (script/frame/connect). For LiveCoinWatch, we allow `*.livecoinwatch.com` (used by TraderAI ticker); remove if not used.
+
+- **Testing checklist**
+  - Geo/Phone: verify ISO flag and dial sync; try `?__country=GB` or `?geo=US` overrides.
+  - Forced-country: toggle in Admin → System → Lead Capture; ensure the picker locks to the priority country.
+  - CAPTCHA: ensure the widget renders; on empty submit, server returns 422 mapped to the captcha message; Turnstile resets properly.
+  - AJAX 422: wrong email/phone show inline errors; Back button flows (if applicable) work.
+  - Redirect: after success, `/redirect` shows splash then forwards to settings URL.
+  - Pixels: toggle a pixel on/off and verify injection at `head/body_start/body_end` locations.
+  - CSP: open DevTools → Console; confirm no CSP blocks. If blocked, adjust the middleware for only the domains you actually use.
+
+- **Config and env**
+  - `config/services.php` → `turnstile.site_key` and `turnstile.secret` + `turnstile.enabled`.
+  - Seed Admin or login and set `System → Appearance` template selection and `System → Lead Capture` options.
+  - Clear caches when needed: `php artisan optimize:clear`.
+
 ## Authentication (Admin only)
 
 - Admin authentication is fully managed by Filament under `/admin/*`.
@@ -789,39 +861,45 @@ php artisan optimize
 
 ## Bot Protection (Cloudflare Turnstile)
 
-Turnstile is integrated on the public lead form and verified server-side when enabled.
+Lead forms include Cloudflare Turnstile to prevent automated submissions. The widget appears on the second step (phone number) of the multi-step signup flow.
 
-0) Create a Turnstile widget and add your domains
-- Go to https://dash.cloudflare.com → Turnstile → Add widget
-- Widget name: any descriptive label (e.g., TraderAI Lead Form)
-- Hostnames: add each host you will use (no protocol or paths):
-  - traderai.live
-  - traderai.live.test
-  - localhost
-  - 127.0.0.1
-  - app.traderai.live (if you use a subdomain)
-- Widget mode: Managed (recommended). You can switch to Invisible later.
-- Pre-clearance: No (unless you specifically need a site-wide Cloudflare challenge bypass cookie)
-- Save and copy the generated Site key and Secret key.
+### Configuration
 
-1) Configure environment
-```
-TURNSTILE_ENABLED=true
-TURNSTILE_SITE_KEY=1x00000000000000000000AA   # replace with your site key
-TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA  # replace with your secret
-TURNSTILE_TIMEOUT=5
-```
+1. **Cloudflare Turnstile Setup**
+   - Create a site key and secret at [Cloudflare Turnstile Dashboard](https://dash.cloudflare.com/?to=/:account/turnstile)
+   - Choose "Managed" challenge type for best balance of security and UX
+   - Add your development/production domains to the allowed domains list
 
-2) Code paths
-- Config: `config/services.php` → `services.turnstile.*`
-- Blade widget: `resources/views/traderai-template/home.blade.php` (auto-includes API script and renders widget when enabled)
-- Verification: `App\Http\Controllers\LeadsController@store` validates `cf-turnstile-response` via Cloudflare’s `siteverify` endpoint
+2. **Environment Variables**
+   ```bash
+   TURNSTILE_ENABLED=true
+   TURNSTILE_SITE_KEY=1x0000000000000000000000000000000AA  # replace with your site key
+   TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA  # replace with your secret
+   TURNSTILE_TIMEOUT=5
+   ```
 
-3) Testing
-- With valid keys, the widget appears below the phone input. Submit the form; if CAPTCHA is missing/invalid, you’ll see an inline error and a reset of the widget.
+3. **Code paths**
+   - Frontend: `resources/views/{template}/home.blade.php` includes the Turnstile widget
+   - Backend: `App\Http\Requests\LeadRequest` validates the Turnstile token
+   - Validation: Token is verified with Cloudflare's API before lead processing
+
+### Implementation Details
+
+- **Explicit Rendering**: Turnstile uses explicit rendering (`render=explicit`) to prevent automatic initialization issues
+- **Conditional Display**: Widget is only rendered when the phone section becomes visible (step 2 of signup)
+- **Error Handling**: Includes proper error logging and graceful fallbacks
+- **Widget Management**: Automatically resets on back button navigation for clean retry experience
+- **Container Cleanup**: Clears existing content before each render to prevent conflicts
+
+### Console Messages
+
+- You may see informational messages like `Note that 'script-src' was not explicitly set, so 'default-src' is used as a fallback` from Turnstile's internal iframe contexts
+- These messages are normal and don't affect functionality - they come from Cloudflare's own iframes, not your main page
+- Focus on actual functionality: if users can complete challenges successfully, the system is working correctly
+
+### Testing
+- With valid keys, the widget appears below the phone input. Submit the form; if CAPTCHA is missing/invalid, you'll see an inline error and a reset of the widget.
 - To disable locally, set `TURNSTILE_ENABLED=false` and clear caches: `php artisan optimize:clear`.
-
-- Filament delete action classes not found
   - Ensure Filament v4 subpackages are installed and autoloaded:
     - `composer require filament/tables:^4 filament/actions:^4 filament/forms:^4 filament/support:^4`
   - In v4, row/bulk actions come from `Filament\\Actions`, not `Filament\\Tables\\Actions`.

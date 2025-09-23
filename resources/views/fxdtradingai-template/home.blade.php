@@ -119,10 +119,28 @@
    #countryCode::-ms-expand { display: none; }
 
    /* Make phone widget stretch nicely */
-   .iti { width: 100%; }
-  </style>
+  .iti { width: 100%; }
+ </style>
+ <?php /** Pixels: head location */ ?>
+ @php
+   try {
+     $___pixels_head = \App\Models\Pixel::query()->where('status','active')->where('location','head')->orderBy('id')->get(['id','provider','code']);
+   } catch (\Throwable $e) { $___pixels_head = collect(); }
+ @endphp
+ @foreach($___pixels_head as $___px)
+   {!! $___px->code !!}
+ @endforeach
  </head>
  <body class="bg-white text-gray-900 {{ $forceCountry ? 'force-no-country' : '' }}">
+  <?php /** Pixels: body_start location */ ?>
+  @php
+    try {
+      $___pixels_body_start = \App\Models\Pixel::query()->where('status','active')->where('location','body_start')->orderBy('id')->get(['id','provider','code']);
+    } catch (\Throwable $e) { $___pixels_body_start = collect(); }
+  @endphp
+  @foreach($___pixels_body_start as $___px)
+    {!! $___px->code !!}
+  @endforeach
   <header class="bg-white shadow-sm border-b sticky top-0 z-50">
    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex items-center justify-between h-16">
@@ -316,129 +334,19 @@
          <span class="iti__flag" id="notice-flag"></span>
          <span>
           Currently only <span id="notice-country">{{ $computedIso }}</span> Nationals can register.
-         </span>
+        </span>
+       </div>
+       @if(config('services.turnstile.enabled') && config('services.turnstile.site_key'))
+        <div class="form-group" id="captcha-block">
+          <div id="cf-turnstile-widget"></div>
+          <div data-error-status="inactive" data-for-error="captcha">Please verify that you are human.</div>
         </div>
-        <!-- captcha div -->
-        <style>
-         /* Container cha để ôm sát nội dung CAPTCHA và khớp với form */
-
-                .cf-turnstile-scalable-container {
-
-                  display: flex;
-
-                  justify-content: center;
-
-                  /* Căn giữa ngang */
-
-                  width: 280px;
-
-                  /* Chiều rộng cố định */
-
-                  height: auto;
-
-                  /* Chiều cao cố định */
-
-                  margin: 0 auto;
-
-                  /* Padding giống input (px-3 py-3) */
-
-                  border: 1px solid #e5e7eb;
-
-                  /* Border giống input (border-gray-200) */
-
-                  border-radius: 0.75rem;
-
-                  /* Nền trắng giống input */
-
-                  box-sizing: border-box;
-
-                  /* Đảm bảo padding không làm tăng kích thước */
-
-                  overflow: hidden;
-
-                  /* Ngăn nội dung tràn ra ngoài */
-
-                }
-
-
-
-                /* Override iframe để giữ kích thước cố định của CAPTCHA */
-
-                .cf-turnstile iframe {
-
-                  width: 200px !important;
-
-                  /* Chiều rộng cố định */
-
-                  height: 78px !important;
-
-                  /* Chiều cao cố định */
-
-                  max-width: none !important;
-
-                  /* Loại bỏ giới hạn max-width */
-
-                  border: none !important;
-
-                  display: block !important;
-
-                }
-
-
-
-                /* Media queries cho các thiết bị nhỏ (dưới 414px) */
-
-                @media (max-width: 414px) {
-
-                  .cf-turnstile-scalable-container {
-
-                    width: 260px;
-
-                    /* Chiếm toàn bộ chiều rộng trên mobile */
-
-                    height: auto;
-
-                    /* Chiều cao tự điều chỉnh theo nội dung */
-
-                    max-width: 280px;
-
-                    /* Giảm padding trên mobile */
-
-                    margin: 0 auto;
-
-                    /* Căn giữa */
-
-                  }
-
-
-
-                  .cf-turnstile iframe {
-
-                    width: 100% !important;
-
-                    /* Chiếm toàn bộ chiều rộng container */
-
-                    height: auto !important;
-
-                    /* Chiều cao tự điều chỉnh */
-
-                    max-width: 280px !important;
-
-                    /* Giới hạn tối đa */
-
-                  }
-
-                }
-        </style>
-        <div class="cf-turnstile-scalable-container">
-         <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.site_key') }}">
-         </div>
-        </div>
-        <!-- Back button (hidden by default, shown on validation errors) -->
-        <button class="w-full bg-blue-600 text-white py-2 sm:py-3 !rounded-button text-base sm:text-lg font-semibold hover:bg-blue-700 transition-colors hidden" id="back-button" type="button">
-         BACK
-        </button>
-        <button class="w-full bg-blue-600 text-white py-2 sm:py-3 !rounded-button text-base sm:text-lg font-semibold hover:bg-blue-700 transition-colors" id="submit-button" type="submit">
+       @endif
+       <!-- Back button (hidden by default, shown on validation errors) -->
+       <button class="w-full bg-blue-600 text-white py-2 sm:py-3 !rounded-button text-base sm:text-lg font-semibold hover:bg-blue-700 transition-colors hidden" id="back-button" type="button">
+        BACK
+       </button>
+        <button class="w-full bg-green-600 text-white py-2 sm:py-3 !rounded-button text-base sm:text-lg font-semibold hover:bg-green-700 transition-colors" id="submit-button" type="submit">
          SUBMIT
         </button>
        </div>
@@ -824,7 +732,65 @@
       });
     });
   });
- </script>
+</script>
+<script>
+ // Explicit Turnstile render when phone section becomes visible
+ window.renderTurnstile = function() {
+   try {
+     var el = document.getElementById('cf-turnstile-widget');
+     if (el && typeof window.turnstile !== 'undefined' && !el.dataset.rendered) {
+       // Clear any existing content first
+       el.innerHTML = '';
+       
+       window.turnstile.render(el, {
+         sitekey: '{{ config('services.turnstile.site_key') }}',
+         theme: 'light'
+       });
+       el.dataset.rendered = 'true';
+     }
+   } catch (e) { 
+     console.log('Turnstile render error:', e);
+   }
+};
+
+// Render when phone section becomes visible
+window.showPhoneSection = function() {
+  var phoneSection = document.getElementById('phone-section');
+  var initialForm = document.getElementById('initial-form');
+  
+  if (phoneSection && initialForm) {
+    initialForm.classList.add('hidden');
+    phoneSection.classList.remove('hidden');
+    
+    // Render Turnstile after a short delay to ensure container is visible
+    setTimeout(function() {
+      if (typeof window.turnstile !== 'undefined') {
+        window.renderTurnstile();
+      }
+    }, 100);
+  }
+};
+
+// Handle Next button click
+document.getElementById('next-button')?.addEventListener('click', function(e){
+  e.preventDefault();
+  window.showPhoneSection();
+});
+
+// Reset Turnstile on Back button
+document.getElementById('back-button')?.addEventListener('click', function(){
+  try { 
+    if (window.turnstile && typeof window.turnstile.reset === 'function') {
+      window.turnstile.reset();
+    }
+    // Clear rendered flag so it will re-render
+    var el = document.getElementById('cf-turnstile-widget');
+    if (el) {
+      el.dataset.rendered = '';
+    }
+  } catch(e){}
+});
+</script>
  <script src="js/sweetalert2@11.js"></script>
  <script>
   document.addEventListener("DOMContentLoaded", function() {
@@ -845,16 +811,19 @@
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   });
- </script>
- <!-- captcha -->
- <script async defer src="js/api.js"></script>
- <!-- Meta Pixel Code -->
- <script>
-  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod? n.callMethod.apply(n,arguments):n.queue.push(arguments)}; if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0'; n.queue=[];t=b.createElement(e);t.async=!0; t.src=v;s=b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t,s)}(window, document,'script','https://connect.facebook.net/en_US/fbevents.js'); fbq('init', '809657624932867'); fbq('track', 'PageView');
- </script>
- <noscript>
-  <img height="1" width="1" style="display:none" src="img/tr-3e01fbe2" />
- </noscript>
- <!-- End Meta Pixel Code -->
+</script>
+@if(config('services.turnstile.enabled') && config('services.turnstile.site_key'))
+ <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+@endif
+
+<?php /** Pixels: body_end location */ ?>
+@php
+  try {
+    $___pixels_body_end = \App\Models\Pixel::query()->where('status','active')->where('location','body_end')->orderBy('id')->get(['id','provider','code']);
+  } catch (\Throwable $e) { $___pixels_body_end = collect(); }
+@endphp
+@foreach($___pixels_body_end as $___px)
+  {!! $___px->code !!}
+@endforeach
  </body>
  </html>
