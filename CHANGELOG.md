@@ -1,3 +1,17 @@
+## [0.3.19] - 2025-09-23
+
+### Added
+- **Legal Pages**: Added "Terms and Conditions" and "Privacy Policy" pages.
+  - Created Blade templates from existing HTML files.
+  - Added routes (`/terms`, `/privacy-policy`) and corresponding methods in `PublicPagesController`.
+  - Controller methods are compatible with the multi-template system.
+
+### Fixed
+- **Content Security Policy (CSP)**:
+  - Resolved `style-src` violation by changing the Bootstrap CDN from `stackpath.bootstrapcdn.com` to the already-allowed `cdnjs.cloudflare.com`.
+  - Resolved `connect-src` violation by adding `cdnjs.cloudflare.com` to the CSP middleware, allowing browser developer tools to fetch CSS source maps.
+- **Broken Assets**: Fixed 404 errors for the logo image by replacing relative paths with Laravel's `asset()` helper in the new Blade templates.
+
 ## [0.3.18] - 2025-06-24
 
 ### Fixed

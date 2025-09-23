@@ -63,4 +63,26 @@ class PublicPagesController extends Controller
             'assetBase' => rtrim(request()->getSchemeAndHttpHost(), '/') . '/' . trim($slug, '/') . '/',
         ]);
     }
+
+    public function terms()
+    {
+        $tpl = $this->resolveTemplate();
+        $view = $tpl . '.terms';
+        if (! view()->exists($view)) {
+            $slug = (string) config('templates.default', 'traderai-template');
+            $view = $slug . '.terms';
+        }
+        return view($view);
+    }
+
+    public function privacyPolicy()
+    {
+        $tpl = $this->resolveTemplate();
+        $view = $tpl . '.privacy-policy';
+        if (! view()->exists($view)) {
+            $slug = (string) config('templates.default', 'traderai-template');
+            $view = $slug . '.privacy-policy';
+        }
+        return view($view);
+    }
 }

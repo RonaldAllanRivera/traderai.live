@@ -22,6 +22,10 @@ Route::match(['GET', 'POST'], '/{template}/index.php', function () {
 Route::get('/safe', [PublicPagesController::class, 'safe'])->name('safe');
 Route::get('/redirect', [PublicPagesController::class, 'redirect'])->name('redirect');
 
+// Terms and Privacy Policy pages
+Route::get('/terms', [PublicPagesController::class, 'terms'])->name('terms');
+Route::get('/privacy-policy', [PublicPagesController::class, 'privacyPolicy'])->name('privacy-policy');
+
 // Lead submissions (rate limited)
 Route::post('/leads', [LeadsController::class, 'store'])
     ->middleware('throttle:20,1')

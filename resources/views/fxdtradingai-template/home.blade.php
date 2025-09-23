@@ -759,8 +759,8 @@
  <footer class="bg-white py-8 sm:py-12 mt-12 sm:mt-16 border-t">
   <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
    <div class="flex flex-wrap justify-center space-x-4 sm:space-x-8 mb-6 sm:mb-8 text-base sm:text-xl">
-    <a href="./policy.html" target="_blank" class="text-gray-600 hover:text-primary">Privacy Policy</a>
-    <a href="./term.html" target="_blank" class="text-gray-600 hover:text-primary">Terms and Conditions</a>
+    <a href="/privacy-policy" target="_blank" class="text-gray-600 hover:text-primary">Privacy Policy</a>
+    <a href="/terms" target="_blank" class="text-gray-600 hover:text-primary">Terms and Conditions</a>
     <a href="#" class="text-gray-600 hover:text-primary scroll-link">Contact</a>
    </div>
    <div class="text-gray-600 max-w-[1440px] mx-auto space-y-6 sm:space-y-8 text-base sm:text-xl">
