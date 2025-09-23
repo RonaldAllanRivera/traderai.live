@@ -1,3 +1,40 @@
+## [0.3.17] - 2025-09-23
+
+### Fixed
+- **UK Flag Display**: Fixed incorrect country flag display in the registration notice:
+  - Updated flag sprite CDN URL to use more reliable source (cdnjs.cloudflare.com)
+  - Added comprehensive CSS for flag sprite positioning with correct background positions for all supported countries
+  - Implemented UK flag SVG fallback with proper Union Jack design for guaranteed display
+  - Enhanced flag initialization JavaScript to ensure correct flag shows on page load
+  - Updated country name display to show "United Kingdom" instead of "GB" for better user experience
+  - Added proper flag styling with correct dimensions (20px × 15px) and vertical alignment
+
+## [0.3.16] - 2025-09-23
+
+### Added
+- **Lead Capture Form to Safe Page**: Implemented full lead capture functionality in `fxdtradingai-template/safe.blade.php`:
+  - Added multi-step lead form with initial name/email collection and phone number validation
+  - Integrated Cloudflare Turnstile widget with explicit rendering for bot protection
+  - Added intl-tel-input for phone field with country detection and flag display
+  - Implemented server-side phone validation with country-specific formatting
+  - Added SweetAlert2 for success/error message display
+  - Included proper form validation and AJAX submission handling
+
+### Changed
+- **Safe Page Layout Alignment**: Updated `fxdtradingai-template/safe.blade.php` to match the layout structure of `home.blade.php`:
+  - Restored "As Easy As 1.2.3" section heading above feature steps
+  - Updated all internal links to use `#lead-form` anchor instead of `#info-section`
+  - Changed CTA button text from "LEARN MORE" to "CLICK TO START" for consistency
+  - Added lead capture card with educational content and disclaimer
+  - Updated sidebar related article links to point to `#lead-form`
+  - Added proper phone validation scripts and Turnstile integration
+  - Removed mobile-specific share/related sections to match home.blade.php structure
+
+### Fixed
+- **Phone Input Consistency**: Added proper intl-tel-input CSS and JavaScript to ensure consistent phone field behavior across all templates
+- **Form State Management**: Implemented proper show/hide logic for form sections with Next/Back button handling
+- **Asset Loading**: Added missing intl-tel-input stylesheet and proper script loading order
+
 ## [0.3.15] - 2025-09-23
 
 ### Fixed

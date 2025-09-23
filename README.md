@@ -262,6 +262,9 @@ Use `resources/views/traderai-template/home.blade.php` as the reference for stru
   - Keep hidden fields synchronized: `phone_prefix` (calling code) and `country` (ISO2).
   - Respect forced-country mode from Lead Capture Settings by locking the picker to the priority country.
   - Show a concise country notice with flag and pretty name (see TraderAI/FXDTradingAI for examples).
+  - Flag display uses a hybrid approach: CSS sprite-based flags with SVG fallback for guaranteed display.
+  - Includes comprehensive flag sprite positioning for all supported countries with proper CDN hosting.
+  - Enhanced flag initialization ensures correct flag appears on page load regardless of timing issues.
 
 - **Cloudflare Turnstile (CAPTCHA)**
   - Gate the widget on config: `@if(config('services.turnstile.enabled') && config('services.turnstile.site_key'))`.
