@@ -718,6 +718,19 @@ UI consistency:
 
 This project is set up to work on Namecheap shared hosting where you cannot change the document root. We will clone directly into `public_html` and use a root `.htaccess` to forward traffic to `public/`.
 
+### Important: Deploying to Non-Empty public_html
+**If your `public_html` directory is not empty** (e.g., existing website, default files), you have two options:
+
+**Option A: Clean Deploy (Recommended for Fresh Install)**
+- Backup existing files: `mv public_html public_html_backup`
+- Create fresh directory: `mkdir public_html`
+- Proceed with steps below
+
+**Option B: Merge Deploy (For Existing Sites)**
+- Navigate to public_html: `cd ~/public_html`
+- Remove conflicting files/folders manually, then use `git init` and `git pull` instead of clone
+- Not recommended due to potential file conflicts
+
 1) Enable SSH and add your GitHub key
 - In Namecheap cPanel: enable SSH and generate an SSH key (or upload your existing public key).
 - Add that public key to GitHub (Deploy key on the repo, or to your GitHub account) so you can use the SSH clone URL.
@@ -728,7 +741,7 @@ This project is set up to work on Namecheap shared hosting where you cannot chan
 ssh USER@SERVER
 
 cd ~/public_html
-git clone --depth 1 git@github.com:YOUR_USER/YOUR_REPO.git .
+git clone --depth 1 git@github.com:RonaldAllanRivera/traderai.live.git .
 
 # Environment
 cp .env.example .env
