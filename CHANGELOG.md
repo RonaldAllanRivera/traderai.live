@@ -1,3 +1,11 @@
+## [0.3.21] - 2025-09-24
+
+### Added
+- **Temporary Comment System**: Implemented a client-side comment system for the `fxdtradingai-template` using browser `localStorage`.
+  - Comments are added instantly without a page reload.
+  - Comments persist on page refresh but are cleared when browser data is cleared.
+  - An expiration mechanism automatically removes comments older than 24 hours.
+
 ## [0.3.20] - 2025-09-24
 
 ### Added

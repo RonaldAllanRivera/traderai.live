@@ -733,18 +733,19 @@
   <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 mt-6 sm:mt-8">
    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
     <div class="lg:col-span-2">
-     <h2 class="text-xl sm:text-2xl font-bold my-6 sm:my-8">Comments (43)</h2>
+     <h2 class="text-xl sm:text-2xl font-bold my-6 sm:my-8" id="comments-count">Comments (43)</h2>
      <div class="bg-gray-50 p-4 sm:p-6 rounded-lg mb-6 sm:mb-8">
       <h3 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4">Leave a Comment</h3>
-      <form class="space-y-3 sm:space-y-4">
+      <form id="comment-form" class="space-y-3 sm:space-y-4">
        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-        <input type="text" placeholder="Your Name" class="w-full px-4 py-2 rounded border-gray-300 border focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <input type="email" placeholder="Your Email" class="w-full px-4 py-2 rounded border-gray-300 border focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input type="text" id="comment-name" placeholder="Your Name" class="w-full px-4 py-2 rounded border-gray-300 border focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+        <input type="email" id="comment-email" placeholder="Your Email" class="w-full px-4 py-2 rounded border-gray-300 border focus:outline-none focus:ring-2 focus:ring-blue-500" />
        </div>
-       <textarea rows="4" placeholder="Your Comment" class="w-full p-4 border rounded border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-       <button class="bg-[#3B82F6] text-white px-4 sm:px-6 py-2 !rounded-button text-sm sm:text-base">Post Comment</button>
+       <textarea id="comment-text" rows="4" placeholder="Your Comment" class="w-full p-4 border rounded border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" required></textarea>
+       <button type="submit" class="bg-[#3B82F6] text-white px-4 sm:px-6 py-2 !rounded-button text-sm sm:text-base">Post Comment</button>
       </form>
      </div>
+     <div id="new-comments-container" class="space-y-6 sm:space-y-8 mb-6 sm:mb-8"></div>
      <div class="space-y-6 sm:space-y-8">
       <div class="flex items-start space-x-3 sm:space-x-4">
        <img src="img/6e8c6190078390db69f816c1322cf6a7.jpg" alt="Michael Chen" class="w-8 sm:w-10 h-8 sm:h-10 rounded-full" />
@@ -950,5 +951,106 @@ document.getElementById('back-button')?.addEventListener('click', function(){
 @foreach($___pixels_body_end as $___px)
   {!! $___px->code !!}
 @endforeach
+
+ <script>
+  document.addEventListener('DOMContentLoaded', function () {
+      const commentForm = document.getElementById('comment-form');
+      const commentsContainer = document.getElementById('new-comments-container');
+      const commentsCountEl = document.getElementById('comments-count');
+      const commentsStorageKey = 'fxd_temp_comments';
+      const initialCommentCount = 43;
+
+      function getComments() {
+          const commentsJson = localStorage.getItem(commentsStorageKey);
+          let comments = commentsJson ? JSON.parse(commentsJson) : [];
+          const now = new Date().getTime();
+          // Filter out comments older than 24 hours
+          comments = comments.filter(comment => (now - comment.timestamp) < 24 * 60 * 60 * 1000);
+          localStorage.setItem(commentsStorageKey, JSON.stringify(comments));
+          return comments;
+      }
+
+      function saveComment(comment) {
+          const comments = getComments();
+          comments.push(comment);
+          localStorage.setItem(commentsStorageKey, JSON.stringify(comments));
+      }
+
+      function renderComment(comment) {
+          const commentElement = document.createElement('div');
+          commentElement.className = 'flex items-start space-x-3 sm:space-x-4';
+
+          // Simple avatar from first letter of name
+          const avatar = document.createElement('div');
+          avatar.className = 'w-8 sm:w-10 h-8 sm:h-10 rounded-full bg-gray-300 flex items-center justify-center font-bold text-gray-600';
+          avatar.textContent = escapeHtml(comment.name.charAt(0).toUpperCase());
+
+          const commentBody = document.createElement('div');
+          commentBody.className = 'flex-1';
+
+          const header = document.createElement('div');
+          header.className = 'flex flex-wrap items-center justify-between mb-1 sm:mb-2';
+          header.innerHTML = `
+              <h4 class="font-bold text-base sm:text-lg">${escapeHtml(comment.name)}</h4>
+              <span class="text-gray-500 text-xs sm:text-sm">Just now</span>
+          `;
+
+          const text = document.createElement('p');
+          text.className = 'text-gray-800 mb-2 sm:mb-3 text-sm sm:text-base';
+          text.textContent = comment.text;
+
+          commentBody.appendChild(header);
+          commentBody.appendChild(text);
+          commentElement.appendChild(avatar);
+          commentElement.appendChild(commentBody);
+
+          commentsContainer.prepend(commentElement);
+      }
+
+      function renderAllComments() {
+          const comments = getComments();
+          comments.forEach(renderComment);
+          updateCommentCount();
+      }
+
+      function updateCommentCount() {
+          const currentCount = getComments().length;
+          commentsCountEl.textContent = `Comments (${initialCommentCount + currentCount})`;
+      }
+      
+      function escapeHtml(unsafe) {
+          return unsafe
+               .replace(/&/g, "&amp;")
+               .replace(/</g, "&lt;")
+               .replace(/>/g, "&gt;")
+               .replace(/"/g, "&quot;")
+               .replace(/'/g, "&#039;");
+      }
+
+      commentForm.addEventListener('submit', function (e) {
+          e.preventDefault();
+          const nameInput = document.getElementById('comment-name');
+          const emailInput = document.getElementById('comment-email');
+          const textInput = document.getElementById('comment-text');
+
+          const newComment = {
+              name: nameInput.value,
+              email: emailInput.value, // Not used for rendering, but stored
+              text: textInput.value,
+              timestamp: new Date().getTime()
+          };
+
+          saveComment(newComment);
+          renderComment(newComment);
+          updateCommentCount();
+
+          commentForm.reset();
+      });
+
+      // Initial render on page load
+      renderAllComments();
+  });
+ </script>
+
  </body>
  </html>

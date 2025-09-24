@@ -225,6 +225,7 @@ Routes are declared in `routes/web.php`.
 - Restored sections
   - Re-added content removed during Blade conversion: "As Easy As 1.2.3" steps, sidebar (share + related), comments block, footer, and bottom scripts (menu toggle, newsletter stub, smooth scroll, SweetAlert message handler, Turnstile, and Meta Pixel).
   - These live in `resources/views/fxdtradingai-template/home.blade.php` and mirror the original static `index.html`.
+  - The comments section includes a temporary, client-side comment system using `localStorage`. Comments are added instantly, persist on refresh, and expire after 24 hours.
   - Sidebar share buttons now use platform share URLs (Facebook, X/Twitter, LinkedIn) with encoded metadata.
   - The template sets Open Graph tags in the `<head>` so Facebook/LinkedIn crawlers pull the headline, teaser, and hero image from server-rendered markup. (Platforms no longer allow pre-filled post bodies via share links).
 
