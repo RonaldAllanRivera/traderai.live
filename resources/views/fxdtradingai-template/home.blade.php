@@ -28,6 +28,13 @@
   <title>
    A New AI-Powered Tool for High-Profit Investing Has Just Launched!
   </title>
+
+  <!-- Open Graph / Facebook / LinkedIn -->
+  <meta property="og:title" content="A New AI-Powered Tool for High-Profit Investing Has Just Launched!" />
+  <meta property="og:description" content="A next-generation investment platform combining artificial intelligence with trading strategies across options, futures, stocks, and more has officially entered the market." />
+  <meta property="og:image" content="{{ asset('img/a05954f863ea29ef6ff6abc6ca125aa6.jpg') }}" />
+  <meta property="og:url" content="{{ url()->current() }}" />
+  <meta property="og:type" content="article" />
   <script src="js/3.4.16">
   </script>
   <script>
@@ -661,17 +668,40 @@
    <div class="lg:col-span-1 space-y-6">
     <!-- Share Article -->
     <div class="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
+     @php
+       $shareCurrentUrl = url()->current();
+       $shareEncodedUrl = rawurlencode($shareCurrentUrl);
+       $shareTitle = rawurlencode('A New AI-Powered Tool for High-Profit Investing Has Just Launched!');
+     @endphp
      <h3 class="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4">Share This Article</h3>
      <div class="flex flex-wrap space-x-2 sm:space-x-4">
-      <button class="flex-1 bg-[#3b5998] text-white py-1 sm:py-2 !rounded-button hover:bg-opacity-90 transition-colors flex items-center justify-center text-sm sm:text-base mb-2 sm:mb-0">
+      <a
+        href="https://www.facebook.com/sharer/sharer.php?u={{ $shareEncodedUrl }}"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="flex-1 bg-[#3b5998] text-white py-1 sm:py-2 !rounded-button hover:bg-opacity-90 transition-colors flex items-center justify-center text-sm sm:text-base mb-2 sm:mb-0"
+        aria-label="Share on Facebook"
+      >
        <i class="ri-facebook-fill mr-1 sm:mr-2"></i> Share
-      </button>
-      <button class="flex-1 bg-[#1da1f2] text-white py-1 sm:py-2 !rounded-button hover:bg-opacity-90 transition-colors flex items-center justify-center text-sm sm:text-base mb-2 sm:mb-0">
+      </a>
+      <a
+        href="https://twitter.com/intent/tweet?url={{ $shareEncodedUrl }}&text={{ $shareTitle }}"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="flex-1 bg-[#1da1f2] text-white py-1 sm:py-2 !rounded-button hover:bg-opacity-90 transition-colors flex items-center justify-center text-sm sm:text-base mb-2 sm:mb-0"
+        aria-label="Share on X"
+      >
        <i class="ri-twitter-fill mr-1 sm:mr-2"></i> Tweet
-      </button>
-      <button class="flex-1 bg-[#0077b5] text-white py-1 sm:py-2 !rounded-button hover:bg-opacity-90 transition-colors flex items-center justify-center text-sm sm:text-base">
+      </a>
+      <a
+        href="https://www.linkedin.com/sharing/share-offsite/?url={{ $shareEncodedUrl }}"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="flex-1 bg-[#0077b5] text-white py-1 sm:py-2 !rounded-button hover:bg-opacity-90 transition-colors flex items-center justify-center text-sm sm:text-base"
+        aria-label="Share on LinkedIn"
+      >
        <i class="ri-linkedin-fill mr-1 sm:mr-2"></i> Share
-      </button>
+      </a>
      </div>
     </div>
     <!-- Related Articles -->

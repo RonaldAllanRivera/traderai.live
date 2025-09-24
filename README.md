@@ -225,6 +225,8 @@ Routes are declared in `routes/web.php`.
 - Restored sections
   - Re-added content removed during Blade conversion: "As Easy As 1.2.3" steps, sidebar (share + related), comments block, footer, and bottom scripts (menu toggle, newsletter stub, smooth scroll, SweetAlert message handler, Turnstile, and Meta Pixel).
   - These live in `resources/views/fxdtradingai-template/home.blade.php` and mirror the original static `index.html`.
+  - Sidebar share buttons now use platform share URLs (Facebook, X/Twitter, LinkedIn) with encoded metadata.
+  - The template sets Open Graph tags in the `<head>` so Facebook/LinkedIn crawlers pull the headline, teaser, and hero image from server-rendered markup. (Platforms no longer allow pre-filled post bodies via share links).
 
 ## Add a New Public Template: Implementation Checklist
 
@@ -1118,6 +1120,14 @@ Lead forms include Cloudflare Turnstile to prevent automated submissions. The wi
   - Client-side phone flag/dial sync with robust fallbacks and 10s enforcement.
   - `geo_debug=1` green overlay (server-rendered) for quick verification.
   - Dynamic registration notice wired to the same override, using the CSS sprite flag for Chrome-safe rendering.
+
+### 2025-09-23
+- Pixel tracking integration: Added pixel code support to fxdtradingai-template safe.blade.php
+  - Implemented three pixel injection locations: `<head>`, `<body>` start, and `</body>` end
+  - Each location queries active pixels from the Pixel model by location (`head`, `body_start`, `body_end`)
+  - Added error handling with try-catch blocks to prevent template rendering failures
+  - Pixel code renders using `{!! $___px->code !!}` to support HTML/JavaScript snippets
+  - Maintains consistency with existing pixel implementation in home.blade.php
 
 ### 2025-09-22
 - New public template: FXDTradingAI

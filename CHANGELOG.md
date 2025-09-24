@@ -1,3 +1,10 @@
+## [0.3.20] - 2025-09-24
+
+### Added
+- Social sharing enhancements for `fxdtradingai-template` homepage (`resources/views/fxdtradingai-template/home.blade.php`):
+  - Share buttons now use official Facebook, X/Twitter, and LinkedIn share URLs with encoded metadata.
+  - Added Open Graph tags (title, description, image, URL, type) to populate Facebook/LinkedIn preview cards and document the platforms' no-prefill policy in README.
+
 ## [0.3.19] - 2025-09-23
 
 ### Added
