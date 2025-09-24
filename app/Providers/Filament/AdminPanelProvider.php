@@ -33,6 +33,8 @@ class AdminPanelProvider extends PanelProvider
             ->passwordReset()
             // Add a "Forgot password?" link below the admin login form
             ->renderHook('panels::auth.login.form.after', fn () => view('filament.custom.auth-forgot-link'))
+            // Add "Go to Homepage" link beside the brand in the admin top bar
+            ->renderHook('panels::sidebar.nav.start', fn () => view('filament.custom.brand-with-home-link'))
             ->colors([
                 'primary' => Color::Amber,
             ])
