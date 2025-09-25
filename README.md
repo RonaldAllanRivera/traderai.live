@@ -1,14 +1,31 @@
-# The Immediate Trade Pro — Laravel 12 + Filament 4
+# Full-Stack Laravel 12 Application: Modular Frontend with Advanced Marketing & Lead Gen Tools
 
-Production‑ready Laravel 12 app with a modern Filament 4 admin and a dynamic public landing layer. Admins select the active public template from the panel; the homepage resolves geo/calling code server‑ and client‑side; leads post to the backend with an optional redirect splash. The admin suite includes Leads, Users, Pixels, Cloaker, and Settings, with strong developer ergonomics (seeders, factories, Postman, and deployment playbooks).
+This repository showcases a production-ready Laravel 12 application built with a modern, modular architecture. It features a powerful Filament 4 admin panel that controls a dynamic, multi-template frontend, designed for high-performance lead generation and sophisticated traffic management.
 
-**What stands out at a glance**
-- Dynamic public templates: pick the active template in Admin → System → Appearance; routes remain static.
-- Leads at scale: Leads and Users with search/filtering and streaming CSV export.
-- Pixels manager: attach tracking snippets by provider, location, and status.
-- Cloaker middleware: rule‑based allow/redirect by IP, country, UA, referrer, and params; includes counters and an admin tester.
-- Geo/phone controls: admin‑controlled worldwide auto country code or forced Priority Country, with server‑side libphonenumber validation and client‑side UX.
-- Operational maturity: SSH+Git deployment flows, clear env/bootstrap, troubleshooting, and testing guides.
+The system is engineered for scalability and flexibility, allowing administrators to swap out the entire public-facing website from a dropdown in the admin panel, without any code changes. It includes a suite of enterprise-grade marketing tools, robust security features, and a clear path for deployment and maintenance.
+
+**Core Technical Highlights & Features:**
+
+*   **Dynamic Multi-Template Frontend**: A modular architecture where the entire public website (Blade templates and assets) can be switched on-the-fly from the admin panel. This allows for rapid A/B testing and rebranding without redeployment.
+*   **Advanced Lead Management System**:
+    *   Robust lead capture forms with server-side validation using `giggsey/libphonenumber-for-php` for global phone number accuracy.
+    *   Seamless AJAX form submission with a clean redirect flow and inline validation messages.
+    *   Integrated CSV export for leads, optimized for large datasets with streaming downloads.
+*   **Sophisticated Geo-Targeting & Phone Logic**:
+    *   Server-side country resolution middleware that detects a visitor's location via CDN headers (e.g., Cloudflare's `CF-IPCountry`) or IP lookup APIs.
+    *   Admin-controlled "Priority Country" mode to force a specific country's dialing code and validation rules on the frontend.
+    *   Client-side integration with `intl-tel-input` that syncs automatically with the backend's resolved country.
+*   **Enterprise-Grade Marketing & Traffic Management Suite**:
+    *   **Cloaker Middleware**: A powerful, custom-built middleware to conditionally redirect traffic based on a rules engine. Rules can target IP address, country, user agent, referrer, or URL parameters, with hit counters for each rule. Includes an admin-panel tester for easy configuration.
+    *   **Dynamic Pixel Manager**: An admin-managed system to inject any third-party tracking script (e.g., Google Analytics, Meta Pixel) into the website's `<head>` or `<body>` without touching code.
+*   **Modern Admin Panel with Filament 4**: A beautiful and fast admin interface built with the latest version of Filament, providing full CRUD management for all system resources.
+*   **Robust Security-First Design**:
+    *   **Content Security Policy (CSP)**: Implemented via middleware, with stricter policies for public routes and more permissive rules for the admin panel to accommodate Livewire.
+    *   **Bot Protection**: Integrated with Cloudflare Turnstile to secure forms from automated abuse.
+    *   **Rate Limiting**: Applied to critical routes like lead submission to prevent spam.
+*   **Developer Ergonomics & Operational Maturity**:
+    *   Comprehensive documentation covering local setup (Laragon, `php artisan serve`), deployment playbooks (SSH/Git, cPanel), and troubleshooting.
+    *   Database seeders and factories for rapid environment setup and testing.
 
 ## Table of Contents
 
@@ -30,8 +47,8 @@ Production‑ready Laravel 12 app with a modern Filament 4 admin and a dynamic p
  - [Troubleshooting Note: 422 with Ofcom test numbers](#troubleshooting-note-422-with-ofcom-test-numbers)
 - [Bot Protection (Cloudflare Turnstile)](#bot-protection-cloudflare-turnstile)
 - [Security (Content Security Policy)](#security-content-security-policy)
-- [Changelog](#changelog)
-- [License](#license)
+- [New Template Integration Workflow](#new-template-integration-workflow)
+
 
 ## Tech Stack
 
@@ -1061,6 +1078,100 @@ php artisan migrate --force --seed   # remove --seed if not desired
 php artisan optimize
 ```
 
+## New Template Integration Workflow
+
+This guide provides a step-by-step workflow for cloning a static HTML template and fully integrating it into the Laravel application, including lead capture, backend logic, and marketing scripts.
+
+### Phase 1: Template Scaffolding & Asset Migration
+
+This phase focuses on converting the raw HTML files into Blade templates and organizing the static assets.
+
+1.  **Clone Static Pages**:
+    *   Obtain the static HTML for the primary landing page (`index.html`).
+    *   Obtain static HTML for legal pages: `privacy-policy.html`, `terms-and-conditions.html`, and `cookies.html` if available.
+
+2.  **Convert to Blade**:
+    *   Rename each `.html` file to `.blade.php`. For example, `index.html` becomes `home.blade.php`.
+    *   **Important**: For this workflow, do not use Blade partials (`@include`, `@extends`). Each Blade file should be a self-contained template to match the original structure.
+
+3.  **Organize Files**:
+    *   Create a new directory for your template under `public/`, e.g., `public/new-template/`.
+    *   Move all static assets (`css`, `js`, `img`, `fonts`, `video`) into this new directory.
+    *   Create a corresponding directory under `resources/views/`, e.g., `resources/views/new-template/`.
+    *   Move your newly created `.blade.php` files into this view directory.
+
+    *Reference: See the [Template Assets](#template-assets-migration-and-best-practices) section for more details on the asset structure.*
+
+### Phase 2: Lead Form & Backend Integration
+
+This phase connects the public-facing lead form to the application's backend.
+
+1.  **Develop the Lead Form**:
+    *   Ensure the form exists in your `home.blade.php` file with fields for at least `email` and `phone_number`.
+    *   The form should `POST` to `route('leads.store')`.
+
+2.  **Implement Phone & Email Validation**:
+    *   The backend already handles email validation (`required`, `email`, `max:255`).
+    *   Phone number validation is based on the selected or priority country. The `LeadsController` uses `libphonenumber` to ensure it's a valid mobile number for that region.
+
+3.  **Connect to Database**:
+    *   The `LeadsController@store` method handles creating a `Lead` record upon successful validation. No extra database connection work is needed in the template.
+
+4.  **Set Country Code Logic**:
+    *   The phone input widget (`intl-tel-input`) automatically handles country code detection based on the visitor's IP or forced Priority Country.
+    *   This is configured in **Admin → System → Lead Capture**. Ensure "Auto Country Adjust" is enabled or a "Priority Country" is set.
+
+### Phase 3: User Flow & Authentication
+
+This phase handles what happens after a user signs up.
+
+1.  **Implement Auto-Login (If Applicable)**:
+    *   If the lead form includes `email` and `password` fields, the system can automatically log the user in.
+    *   This is controlled in **Admin → System → Lead Capture** → `auto_login_after_signup`.
+    *   If enabled, ensure your application has a dashboard or member's area for the user to land on.
+
+2.  **Create Sign-Up Page (If Separate)**:
+    *   If the design includes a dedicated `/sign-up` page, clone its HTML, convert it to `signup.blade.php`, and ensure its form also posts to `route('leads.store')`.
+
+### Phase 4: Post-Submission & Redirects
+
+This phase defines the user experience immediately after form submission.
+
+1.  **Display "Thank You" Message**:
+    *   Upon successful AJAX submission, your form's JavaScript should display an inline "Thank you" message to the user.
+
+2.  **Implement Redirect Flow**:
+    *   After showing the thank you note, the JavaScript should redirect the user to the internal `/redirect` page.
+    *   The `redirect.blade.php` template (e.g., `resources/views/fxdtradingai-template/redirect.blade.php`) will be displayed.
+    *   This page shows a message and automatically redirects to the external "Redirect URL" (set in **Admin → System → Lead Capture**) after a 5-second delay.
+    *   Add a manual link on this page pointing to the same external URL as a fallback.
+
+### Phase 5: Marketing & Tracking
+
+This phase integrates third-party tracking scripts.
+
+1.  **Implement Pixel & Cloaker Scripts**:
+    *   **Pixels**: Do not hardcode tracking scripts. Add them via **Admin → Marketing → Pixels**. They will be injected automatically into the `home.blade.php` file at the specified locations (`head`, `body_start`, `body_end`).
+    *   **Cloaker**: The `CloakerMiddleware` is already active on the homepage route. It will automatically show the `safe.blade.php` page to visitors who match a blacklist rule. No template changes are required.
+
+### Phase 6: UI/UX & Functionality Enhancements
+
+This phase covers final touches and feature parity with the original static template.
+
+1.  **Modify Logo**:
+    *   Edit the logo image file in `public/{template}/img/` to add any required text like "by Vintage Trader".
+
+2.  **Add Links**:
+    *   If the design has a title or CTA that should link to the final redirect URL, add an `<a>` tag pointing to the URL configured in **Admin → System → Lead Capture**.
+
+3.  **Implement Social Buttons & Other Features**:
+    *   Convert static social media buttons into functional `<a>` tags pointing to share URLs (e.g., `https://www.facebook.com/sharer/sharer.php?u=...`).
+    *   Ensure all other interactive elements from the original template are functional.
+
+4.  **Implement Client-Side Commenting**:
+    *   If the template includes a comment section, use JavaScript and `localStorage` to create a temporary, client-side commenting system.
+    *   New comments should be added to `localStorage` and rendered instantly. They should persist on page refresh but do not need to be saved to the database.
+
 
 ## Troubleshooting
 
@@ -1134,34 +1245,3 @@ Lead forms include Cloudflare Turnstile to prevent automated submissions. The wi
     - `composer require filament/tables:^4 filament/actions:^4 filament/forms:^4 filament/support:^4`
   - In v4, row/bulk actions come from `Filament\\Actions`, not `Filament\\Tables\\Actions`.
   - Clear caches: `composer dump-autoload -o && php artisan optimize:clear`.
-
-## Changelog
-
-### 2025-09-18
-- Cloaker middleware now preserves query params (`__country`, `geo`, `geo_debug`, `__ua`, `__ref`, `utm_*`, `gclid`, `fbclid`) when redirecting to offer/safe.
-- Homepage geo/phone integration:
-  - Server-side meta `isoCode` and hidden `area_code` pre-seeded from `__country|geo` (default `PH`).
-  - Client-side phone flag/dial sync with robust fallbacks and 10s enforcement.
-  - `geo_debug=1` green overlay (server-rendered) for quick verification.
-  - Dynamic registration notice wired to the same override, using the CSS sprite flag for Chrome-safe rendering.
-
-### 2025-09-23
-- Pixel tracking integration: Added pixel code support to fxdtradingai-template safe.blade.php
-  - Implemented three pixel injection locations: `<head>`, `<body>` start, and `</body>` end
-  - Each location queries active pixels from the Pixel model by location (`head`, `body_start`, `body_end`)
-  - Added error handling with try-catch blocks to prevent template rendering failures
-  - Pixel code renders using `{!! $___px->code !!}` to support HTML/JavaScript snippets
-  - Maintains consistency with existing pixel implementation in home.blade.php
-
-### 2025-09-22
-- New public template: FXDTradingAI
-  - Added registry entry in `config/templates.php` under `available`:
-    - `'fxdtradingai-template' => ['label' => 'FXDTradingAI', 'views' => ['home','safe','redirect']]`
-  - Views folder: `resources/views/fxdtradingai-template/` (requires `home.blade.php`, `safe.blade.php`, `redirect.blade.php`).
-  - Assets folder: `public/fxdtradingai-template/` (CSS/JS/images/fonts/video/etc.).
-  - Admin → System → Appearance reads from `config('templates.available')`, so the new template appears automatically in the dropdown. After saving, compiled views are cleared for immediate effect.
-  - `PublicPagesController` passes a per-template `$assetBase` to views; ensure each template includes `<base href="{{ $assetBase }}">` at the top of `<head>`.
-
-## License
-
-MIT

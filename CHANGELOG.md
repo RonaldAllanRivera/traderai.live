@@ -1,3 +1,12 @@
+## [0.3.22] - 2025-09-25
+
+### Changed
+- **Project Documentation Overhaul**:
+  - Rewrote the main `README.md` introduction to be generic and highlight the project's core features as a reusable, full-stack Laravel application boilerplate.
+  - The new introduction is framed to be attractive to potential employers by emphasizing the modular architecture, advanced marketing tools (Cloaker, Pixel Manager), and robust lead generation system.
+  - Added a comprehensive "New Template Integration Workflow" tutorial to `README.md`, detailing the step-by-step process for cloning and integrating a new static HTML template into the application.
+  - Updated the Table of Contents to include the new workflow section.
+
 ## [0.3.21] - 2025-09-24
 
 ### Added
