@@ -1,3 +1,14 @@
+## [0.3.23] - 2025-09-25
+
+### Fixed
+- **HylinkQuantum Template Country Flag and Validation**:
+  - Fixed incorrect country flag display by switching from local `intl-tel-input` CSS to CDN version to ensure proper sprite mapping.
+  - Implemented proper country notice UI with `#country-notice` div, `#notice-flag` span, and `#notice-country` span to match FXDTradingAI template behavior.
+  - Fixed validation success/error message display by adding `.hidden` utility class to CSS and ensuring alert containers are properly styled.
+  - Positioned `done-icon.png` checkmarks correctly inside text fields after successful validation by updating CSS positioning rules.
+  - Disabled country code dropdown when Priority Country is enforced by adding click/focus blocking on `.iti__selected-flag` and CSS rules to hide dropdown elements, mirroring FXDTradingAI template behavior.
+  - Added conditional body class `force-no-country` to enable CSS-based disabling of country picker when admin sets Priority Country.
+
 ## [0.3.22] - 2025-09-25
 
 ### Changed

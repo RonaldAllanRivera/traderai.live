@@ -37,7 +37,7 @@
   </title>
   <meta content="Quantum Ai is the official 2025 platform for smart investing. Start your Quantum Ai Investment journey with AI-powered tools and real-time trading precision." name="description"/>
  </head>
- <body>
+ <body class="{{ $forceCountry ? 'force-no-country' : '' }}">
   <div class="menu">
    <div class="menu-item scroll-btn" data-scroll=".header">
     The main page
@@ -119,23 +119,66 @@
      </div>
      <div class="col-xl-4 col-12">
       <div class="info-feedback feedback">
-       <form action="#">
+       <form action="{{ route('leads.store') }}" class="form-registration" data-id="form-registration" method="post" style="display: '';">
+        @csrf
         <div class="feedback-mob-row">
          <div class="feedback-input">
-          <input name="firstname" placeholder="Enter your firstname" required="" type="text"/>
+          <input name="first_name" placeholder="Enter your firstname" required="" type="text" value=""/>
+          <div data-error-status="inactive" data-for-error="first_name">Your first name is too short (at least 2 characters)</div>
+          <span data-check-icon="inactive" data-check-icon-for="first_name"><img alt="✔" loading="lazy" src="img/done-icon.png"/></span>
          </div>
          <div class="feedback-input">
-          <input name="lastname" placeholder="Enter your lastname" required="" type="text"/>
+          <input name="last_name" placeholder="Enter your lastname" required="" type="text" value=""/>
+          <div data-error-status="inactive" data-for-error="last_name">Your last name is too short (at least 2 characters)</div>
+          <span data-check-icon="inactive" data-check-icon-for="last_name"><img alt="✔" loading="lazy" src="img/done-icon.png"/></span>
          </div>
         </div>
         <div class="feedback-mob-row">
          <div class="feedback-input">
-          <input name="email" placeholder="Enter email address" required="" type="email"/>
+          <input name="email" placeholder="Enter email address" required="" type="email" value=""/>
+          <div data-error-status="inactive" data-for-error="email">Please enter a valid email address.</div>
+          <span data-check-icon="inactive" data-check-icon-for="email"><img alt="✔" loading="lazy" src="img/done-icon.png"/></span>
          </div>
          <div class="feedback-input feedback-phone">
-          <input name="phone" placeholder="Your telephone number" required="" type="tel"/>
+          <input class="area_code" name="phone_prefix" required="" type="hidden" value="{{ $preDial }}"/>
+          <input name="country" type="hidden" value="{{ $computedIso }}"/>
+          <input class="phone" name="phone_number" placeholder="Your telephone number" required="" type="tel" data-force-country="{{ $forceCountry ? '1' : '0' }}"/>
+          <div data-error-status="inactive" data-for-error="phone">Please enter a valid phone number.</div>
+          <span data-check-icon="inactive" data-check-icon-for="phone"><img alt="✔" loading="lazy" src="img/done-icon.png"/></span>
+         </div>
+         <!-- Country notice -->
+         <div class="mt-1 text-xs text-black flex items-center gap-1" id="country-notice">
+          <span>
+           Currently only 
+           <span class="inline-flex items-center">
+             <span class="iti__flag" id="notice-flag" style="display: none;"></span>
+             <!-- UK Flag SVG Fallback -->
+             @if($computedIso === 'GB')
+             <svg id="uk-flag-fallback" width="20" height="15" viewBox="0 0 60 30" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
+               <clipPath id="a"><path d="M0 0v30h60V0z"/></clipPath>
+               <clipPath id="b"><path d="M30 15h30v15zv15H0zH0V0zV0h30z"/></clipPath>
+               <g clip-path="url(#a)">
+                 <path d="M0 0v30h60V0z" fill="#012169"/>
+                 <path d="M0 0l60 30m0-30L0 30" stroke="#fff" stroke-width="6"/>
+                 <path d="M0 0l60 30m0-30L0 30" clip-path="url(#b)" stroke="#C8102E" stroke-width="4"/>
+                 <path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/>
+                 <path d="M30 0v30M0 15h60" stroke="#C8102E" stroke-width="6"/>
+               </g>
+             </svg>
+             @endif
+           </span>
+           <span id="notice-country">{{ $computedIso === 'GB' ? 'United Kingdom' : $computedIso }}</span> Nationals can register.
+          </span>
          </div>
         </div>
+        @if(config('services.turnstile.enabled') && config('services.turnstile.site_key'))
+        <div class="feedback-mob-row" id="captcha-block">
+          <div class="form-group" style="width:100%">
+            <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.site_key') }}" data-theme="light"></div>
+            <div data-error-status="inactive" data-for-error="captcha">Please verify that you are human.</div>
+          </div>
+        </div>
+        @endif
         <div class="feedback-mob-row js-center">
          <div class="feedback-row">
           <label class="feedback-check" for="feedback-checkbox">
@@ -145,7 +188,7 @@
           <div class="feedback-row-slogan">
            <p class="feedback-row-slogan-item">
             I agree with him
-            <a class="modal-btn" data-modal="#modal-third" href="/privacy-policy">
+            <a target="_blank" class="modal-btn" data-modal="#modal-third" href="/privacy-policy">
              Privacy policy
             </a>
            </p>
@@ -166,6 +209,7 @@
         <div class="feedback-sub">
          <input type="submit" value="🟣 Open a free account"/>
         </div>
+        <div class="alert alert-success font-bold hidden" id="signup-success-message" role="alert" style="margin-top:12px; text-align:center;"></div>
        </form>
       </div>
      </div>
@@ -1328,6 +1372,183 @@
   </footer>
   <script data-cfasync="false" src="js/email-decode.min.js">
   </script>
+  <script>
+   // Geo-based default for phone country code & flag without changing existing scripts
+   (function () {
+     var phoneInput = document.querySelector('form.form-registration input.phone');
+     var areaInput = document.querySelector('form.form-registration input.area_code');
+     if (!phoneInput) { return; }
+
+     // ISO2 -> dial code map (expanded so fallback works when geo API is blocked)
+    var DIAL_MAP = {
+      'US': '1', 'CA': '1', 'GB': '44', 'IE': '353', 'AU': '61', 'NZ': '64',
+      'BE': '32', 'NL': '31', 'DE': '49', 'FR': '33', 'ES': '34', 'PT': '351', 'IT': '39', 'AT': '43', 'CH': '41',
+      'SE': '46', 'NO': '47', 'DK': '45', 'FI': '358', 'PL': '48', 'CZ': '420', 'RO': '40', 'HU': '36', 'GR': '30', 'BG': '359',
+      'PH': '63', 'SG': '65', 'MY': '60', 'ID': '62', 'TH': '66', 'VN': '84', 'JP': '81', 'KR': '82', 'IN': '91', 'AE': '971', 'SA': '966', 'TR': '90',
+      'MX': '52', 'BR': '55', 'AR': '54', 'CL': '56', 'CO': '57',
+      'ZA': '27', 'NG': '234', 'EG': '20'
+    };
+
+     function manualUiUpdate(iso2, dial) {
+       try {
+         var wrapper = phoneInput.closest('.iti') || phoneInput.parentElement || document;
+         var dialEl = wrapper.querySelector('.iti__selected-dial-code') || wrapper.querySelector('[class*="dial-code"]');
+         if (dialEl && dial) {
+           dialEl.textContent = '+' + String(dial);
+         }
+         var flagWrap = wrapper.querySelector('.iti__selected-flag .iti__flag') || wrapper.querySelector('[class*="flag"]');
+         if (flagWrap && iso2) {
+           Array.from(flagWrap.classList).forEach(function (c) {
+             if (c.indexOf('iti__') === 0 && c !== 'iti__flag') { flagWrap.classList.remove(c); }
+           });
+           flagWrap.classList.add('iti__' + String(iso2).toLowerCase());
+         }
+       } catch (e) { /* no-op */ }
+     }
+
+    function updateNotice(iso2, dial) {
+      try {
+        var iso = iso2 ? String(iso2).toUpperCase() : null;
+        var fallbackMap = { 'PH':'Philippines','US':'United States','SG':'Singapore','GB':'United Kingdom','AE':'United Arab Emirates','IN':'India','BE':'Belgium','FR':'France','DE':'Germany','NL':'Netherlands','ES':'Spain','IT':'Italy','SE':'Sweden','NO':'Norway','DK':'Denmark','FI':'Finland','PL':'Poland','IE':'Ireland','PT':'Portugal','RO':'Romania','HU':'Hungary','GR':'Greece','BG':'Bulgaria','AT':'Austria','CH':'Switzerland','AU':'Australia','NZ':'New Zealand','MX':'Mexico','BR':'Brazil','AR':'Argentina','CL':'Chile','CO':'Colombia','ZA':'South Africa','NG':'Nigeria','EG':'Egypt','JP':'Japan','KR':'South Korea','MY':'Malaysia','ID':'Indonesia','TH':'Thailand','VN':'Vietnam','TR':'Turkey','SA':'Saudi Arabia','CA':'Canada','IL':'Israel' };
+        var pretty = null;
+        try { if (window.Intl && typeof Intl.DisplayNames === 'function') { var dn = new Intl.DisplayNames(['en'], { type: 'region' }); pretty = dn.of(iso); } } catch (e) {}
+        var countryEl = document.getElementById('notice-country'); if (countryEl && iso) { countryEl.textContent = pretty || fallbackMap[iso] || iso; }
+        var flagEl = document.getElementById('notice-flag'); if (flagEl && iso) {
+          Array.from(flagEl.classList).forEach(function (c) { if (c.indexOf('iti__') === 0 && c !== 'iti__flag') { flagEl.classList.remove(c); } });
+          flagEl.classList.add('iti__' + iso.toLowerCase());
+        }
+        var countryHidden = document.querySelector('form.form-registration input[name="country"]'); if (countryHidden && iso) countryHidden.value = iso;
+        var areaHidden = document.querySelector('form.form-registration input.area_code'); if (areaHidden && dial) areaHidden.value = String(dial).replace('+','');
+      } catch (e) { /* no-op */ }
+    }
+
+     function applyGeo(iso2, callingCode) {
+       var iso = iso2 ? String(iso2).toUpperCase() : null;
+       var dial = callingCode || (iso && DIAL_MAP[iso]) || null;
+
+      try {
+        if (window.intlTelInputGlobals && typeof window.intlTelInputGlobals.getInstance === 'function') {
+          var iti = window.intlTelInputGlobals.getInstance(phoneInput);
+          if (iti && iso) { iti.setCountry(iso.toLowerCase()); }
+        } else if (typeof window.intlTelInput === 'function') {
+          var iti2; try { iti2 = window.intlTelInput(phoneInput, { initialCountry: iso ? iso.toLowerCase() : undefined, separateDialCode: true }); } catch(e){}
+          if (iti2 && iti2.setCountry && iso) { iti2.setCountry(iso.toLowerCase()); }
+        } else if (window.jQuery && jQuery.fn && typeof jQuery.fn.intlTelInput === 'function') {
+          try { jQuery(phoneInput).intlTelInput('setCountry', iso.toLowerCase()); } catch(e){}
+        } else { manualUiUpdate(iso, dial); }
+      } catch (e) { manualUiUpdate(iso, dial); }
+
+       if (areaInput && dial) { areaInput.value = String(dial).replace('+',''); }
+       updateNotice(iso, dial);
+     }
+
+     function enforce(iso2, callingCode) {
+       var iso = iso2 ? String(iso2).toUpperCase() : null;
+       var dial = callingCode || (iso && DIAL_MAP[iso]) || null;
+       var elapsed = 0; var step = 100; var max = 10000;
+       var t = setInterval(function(){
+         var currentDial = (document.querySelector('.iti__selected-dial-code')||{}).textContent || '';
+         var needDial = dial ? ('+'+String(dial)) : null;
+         if (needDial && currentDial !== needDial) { applyGeo(iso, dial); }
+         elapsed += step; if (elapsed >= max) { clearInterval(t); }
+       }, step);
+     }
+
+     function fetchGeoAndApply() {
+      fetch('https://ipwho.is/?fields=country_code,calling_code')
+        .then(function (r) { return r.json(); })
+        .then(function (data) { var iso = data && data.country_code; var dial = data && data.calling_code; applyGeo(iso, dial); })
+        .catch(function () { /* ignore */ });
+    }
+
+     function whenPhoneUiReady(cb) {
+       var tries = 0; var maxTries = 50; var interval = setInterval(function () {
+         tries++;
+         var ready = phoneInput.closest('.iti') && phoneInput.closest('.iti').querySelector('.iti__selected-dial-code') || 
+                     phoneInput.closest('.iti') && phoneInput.closest('.iti').querySelector('[class*="dial-code"]') ||
+                     document.querySelector('.iti__selected-dial-code') || document.querySelector('[class*="dial-code"]') ||
+                   (window.intlTelInputGlobals && typeof window.intlTelInputGlobals.getInstance === 'function' && window.intlTelInputGlobals.getInstance(phoneInput));
+         if (ready || tries >= maxTries) { clearInterval(interval); cb(); }
+       }, 50);
+       try { var obs = new MutationObserver(function () { var readyNow = document.querySelector('.iti__selected-dial-code') || document.querySelector('[class*="dial-code"]'); if (readyNow) { obs.disconnect(); cb(); } }); obs.observe(document.body, { childList: true, subtree: true }); } catch (e) {}
+     }
+
+    var params = new URLSearchParams(window.location.search);
+    function debugLog(){ /* disabled */ }
+    var overrideIso = params.get('__country') || params.get('geo');
+    var metaForceEl = document.querySelector('meta[name="forceCountry"]');
+    var isForced = metaForceEl && metaForceEl.getAttribute('content') === '1';
+    whenPhoneUiReady(function(){
+      var metaEl = document.querySelector('meta[name="isoCode"]');
+      var metaIso = metaEl && metaEl.getAttribute('content');
+      if (isForced && metaIso) { applyGeo(metaIso, DIAL_MAP[String(metaIso).toUpperCase()] || null); enforce(metaIso, DIAL_MAP[String(metaIso).toUpperCase()] || null); return; }
+      if (overrideIso) { var isoUp = String(overrideIso).toUpperCase(); var dial = DIAL_MAP[isoUp] || null; applyGeo(isoUp, dial); enforce(isoUp, dial); }
+      else { fetchGeoAndApply(); }
+    });
+
+    window.traderaiSetGeoTest = function (iso2, callingCode) { whenPhoneUiReady(function(){ applyGeo(iso2, callingCode); enforce(iso2, callingCode); }); };
+   })();
+  </script>
+  <script>
+   // Lightweight client-side validation for Email and Phone + AJAX submit
+   (function(){
+     var form = document.querySelector('form.form-registration');
+     if (!form) return;
+
+     var el = {
+       email: form.querySelector('input[name="email"]'),
+       phone: form.querySelector('input[name="phone_number"]'),
+       area: form.querySelector('input[name="phone_prefix"]'),
+       alert: form.querySelector('.alert.alert-danger'),
+     };
+
+     function showAlert(msg){
+       if(!el.alert){
+         // Create a lightweight inline alert if not present
+         var a = document.createElement('div'); a.className = 'alert alert-danger'; a.style.marginTop = '8px';
+         form.insertBefore(a, form.firstChild); el.alert = a;
+       }
+       el.alert.textContent = msg; el.alert.classList.remove('hidden'); el.alert.setAttribute('role','alert');
+     }
+     function hideAlert(){ if(!el.alert) return; el.alert.textContent = ''; el.alert.classList.add('hidden'); }
+
+     function setCheckIcon(name, active){ var c = form.querySelector('[data-check-icon-for="'+name+'"][data-check-icon]'); if (c){ c.setAttribute('data-check-icon', active ? 'active' : 'inactive'); } }
+     function setError(name, message){ var eEl = form.querySelector('[data-for-error="'+name+'"][data-error-status]'); if (eEl){ eEl.setAttribute('data-error-status','active'); eEl.style.display='block'; if(message){ eEl.textContent = message; } } setCheckIcon(name, false); }
+     function clearError(name){ var eEl = form.querySelector('[data-for-error="'+name+'"][data-error-status]'); if (eEl){ eEl.setAttribute('data-error-status','inactive'); eEl.style.display='none'; } setCheckIcon(name, true); }
+
+     function debounce(fn, wait){ var t; return function(){ var args = arguments, ctx = this; clearTimeout(t); t = setTimeout(function(){ fn.apply(ctx, args); }, wait); }; }
+
+     function validateEmail(opts){ var silent = opts && opts.silent; if(!el.email) return true; var v = (el.email.value||'').trim(); var ok = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v); if (ok) { clearError('email'); } else { if (silent) setCheckIcon('email', false); else setError('email','Please enter a valid email address.'); } return ok; }
+
+     function getActiveIso(){ var metaEl = document.querySelector('meta[name="isoCode"]'); return (metaEl && metaEl.getAttribute('content') || '').toUpperCase(); }
+
+     function validatePhone(opts){ var silent = opts && opts.silent; if(!el.phone) return true; var v = String(el.phone.value||''); var digits = v.replace(/\D/g,''); var iso = getActiveIso(); var ok; switch(iso){ case 'GB': ok = /^(0?7\d{9})$/.test(digits); break; case 'US': ok = /^\d{10}$/.test(digits); break; case 'IL': ok = /^(0?5\d{8})$/.test(digits); break; case 'AE': ok = /^(0?5\d{7,8})$/.test(digits); break; default: ok = digits.length >= 6 && digits.length <= 14; } if (ok) { clearError('phone'); } else { if (silent) setCheckIcon('phone', false); else setError('phone','Please enter a valid phone number.'); } return ok; }
+
+     el.email && el.email.addEventListener('blur', function(){ hideAlert(); validateEmail({silent:false}); });
+     el.phone && el.phone.addEventListener('blur', function(){ hideAlert(); validatePhone({silent:false}); });
+     el.email && el.email.addEventListener('input', debounce(function(){ validateEmail({silent:true}); }, 200));
+     el.phone && el.phone.addEventListener('input', debounce(function(){ validatePhone({silent:true}); }, 200));
+
+     form.addEventListener('submit', function(ev){
+      hideAlert();
+      var okE = validateEmail({silent:false});
+      var okP = validatePhone({silent:false});
+      if (!(okE && okP)) { ev.preventDefault(); showAlert(!okE ? 'Invalid email address.' : 'Invalid phone number.'); return; }
+
+      ev.preventDefault();
+      var btn = form.querySelector('button[type="submit"], input[type="submit"]'); btn && (btn.disabled = true);
+      var successEl = document.getElementById('signup-success-message'); if (successEl) { successEl.classList.add('hidden'); successEl.textContent = 'Submitting…'; }
+
+      var fd = new FormData(form);
+      var token = form.querySelector('input[name="_token"]')?.value || '';
+      fetch(form.action, { method: 'POST', headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': token }, body: fd, credentials: 'same-origin' })
+      .then(async function(r){ if (!r.ok) { var text = ''; try { text = await r.text(); } catch(e){} try { var payload = text ? JSON.parse(text) : null; if (r.status === 422 && payload && payload.errors) { var handled = false; if (payload.errors.email) { setError('email', payload.errors.email[0] || ''); handled = true; } if (payload.errors.phone_number || payload.errors.phone) { var msg = (payload.errors.phone_number && payload.errors.phone_number[0]) || (payload.errors.phone && payload.errors.phone[0]) || ''; setError('phone', msg || 'Please enter a valid phone number.'); setCheckIcon('phone', false); handled = true; } if (payload.errors['cf-turnstile-response']) { var cmsg = payload.errors['cf-turnstile-response'][0] || 'Please verify that you are human.'; setError('captcha', cmsg); try { if (window.turnstile && typeof window.turnstile.reset === 'function') { window.turnstile.reset(); } } catch(e){} handled = true; } if (!handled) { var firstKey = Object.keys(payload.errors)[0]; var firstMsg = firstKey ? (payload.errors[firstKey][0] || '') : ''; showAlert(firstMsg || 'Please check your input and try again.'); } btn && (btn.disabled = false); if (successEl){ successEl.classList.add('hidden'); } return Promise.reject(); } if (r.status === 429) { showAlert('Too many attempts. Please wait a moment and try again.'); btn && (btn.disabled = false); if (successEl){ successEl.classList.add('hidden'); } return Promise.reject(); } showAlert('Submission failed. Please try again.'); btn && (btn.disabled = false); if (successEl){ successEl.classList.add('hidden'); } return Promise.reject(); } catch(e) { showAlert('Submission failed. Please try again.'); btn && (btn.disabled = false); if (successEl){ successEl.classList.add('hidden'); } return Promise.reject(); } } return r.json(); })
+      .then(function(data){ if (successEl){ successEl.innerHTML = "Thank you for sharing your information with us!<br>Our team truly appreciates the time you took, and we’ll be reaching out within 48 hours to assist you further."; successEl.style.fontWeight = '700'; successEl.style.textAlign = 'center'; successEl.classList.remove('hidden'); }
+        var target = data && data.redirect; if (target) { var splash = "{{ route('redirect') }}"; var leadId = data && data.lead_id ? String(data.lead_id) : ''; var url = splash + '?to=' + encodeURIComponent(String(target)) + '&s=5' + (leadId ? ('&lead_id=' + encodeURIComponent(leadId)) : ''); window.location.href = url; } })
+      .catch(function(){ showAlert('Submission failed. Please try again.'); btn && (btn.disabled = false); if (successEl){ successEl.classList.add('hidden'); } });
+    });
+   })();
+  </script>
   <script src="js/jquery-3.6.0.min.js">
   </script>
   <script src="js/slick.min.js" type="text/javascript">
@@ -1336,12 +1557,22 @@
   </script>
   <script src="js/wow.min.js">
   </script>
+  @if(config('services.turnstile.enabled') && config('services.turnstile.site_key'))
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  @endif
   <script>
    new WOW().init();
   </script>
   <script src="js/script.js">
   </script>
   <style>
+   /* Hide check icon when inactive and hide error blocks when inactive */
+   [data-check-icon][data-check-icon="inactive"] { display: none !important; }
+   [data-for-error][data-error-status="inactive"] { display: none !important; }
+   /* When Priority Country is forced, hide/disable intl-tel-input country UI (match FXD) */
+   .force-no-country .iti__country-list { display: none !important; }
+   .force-no-country .iti__selected-flag { pointer-events: none; cursor: default; }
+   .force-no-country .iti__arrow { display: none !important; }
    .iti__selected-flag {
 
             z-index: 1000 !important;
@@ -1417,10 +1648,64 @@
 
         });
   </script>
-  <link href="css/intlTelInput.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@17.0.19/build/css/intlTelInput.min.css?v=17.0.19" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <script src="js/intlTelInput.min.js">
   </script>
   <script src="js/utils.min.js">
+  </script>
+  <script>
+   // Initialize intl-tel-input on the registration form and sync hidden fields (FXD logic)
+   document.addEventListener('DOMContentLoaded', function() {
+     var form = document.querySelector('form.form-registration');
+     var phoneInput = form && form.querySelector('input.phone');
+     var hiddenDial = form && form.querySelector('input.area_code');
+     var hiddenIso = form && form.querySelector('input[name="country"]');
+     var noticeCountry = document.getElementById('notice-country');
+     var noticeFlag = document.getElementById('notice-flag');
+     var iso = (document.querySelector('meta[name="isoCode"]').getAttribute('content') || '').toUpperCase();
+     var isForced = (document.querySelector('meta[name="forceCountry"]').getAttribute('content') === '1');
+     if (phoneInput && window.intlTelInput) {
+       var iti = window.intlTelInput(phoneInput, {
+         initialCountry: iso ? iso.toLowerCase() : undefined,
+         separateDialCode: true,
+         nationalMode: true,
+         autoPlaceholder: 'polite'
+       });
+       function prettyName(code){
+         var map = { 'PH':'Philippines','US':'United States','SG':'Singapore','GB':'United Kingdom','AE':'United Arab Emirates','IN':'India','BE':'Belgium','FR':'France','DE':'Germany','NL':'Netherlands','ES':'Spain','IT':'Italy','SE':'Sweden','NO':'Norway','DK':'Denmark','FI':'Finland','PL':'Poland','IE':'Ireland','PT':'Portugal','RO':'Romania','HU':'Hungary','GR':'Greece','BG':'Bulgaria','AT':'Austria','CH':'Switzerland','AU':'Australia','NZ':'New Zealand','MX':'Mexico','BR':'Brazil','AR':'Argentina','CL':'Chile','CO':'Colombia','ZA':'South Africa','NG':'Nigeria','EG':'Egypt','JP':'Japan','KR':'South Korea','MY':'Malaysia','ID':'Indonesia','TH':'Thailand','VN':'Vietnam','TR':'Turkey','SA':'Saudi Arabia','CA':'Canada','IL':'Israel' };
+         try { if (window.Intl && typeof Intl.DisplayNames==='function'){ var dn=new Intl.DisplayNames(['en'],{type:'region'}); return dn.of(code) || map[code] || code; } } catch(e){}
+         return map[code] || code;
+       }
+       function sync(){
+         try{
+           var data = iti.getSelectedCountryData();
+           if (hiddenDial && data && data.dialCode) hiddenDial.value = String(data.dialCode);
+           if (hiddenIso && data && data.iso2) hiddenIso.value = String(data.iso2).toUpperCase();
+           if (noticeCountry && data && data.iso2) noticeCountry.textContent = prettyName(String(data.iso2).toUpperCase());
+           if (noticeFlag && data && data.iso2) {
+             noticeFlag.style.display = 'inline-block';
+             Array.from(noticeFlag.classList).forEach(function(c){ if (c.indexOf('iti__')===0 && c!=='iti__flag') noticeFlag.classList.remove(c); });
+             noticeFlag.classList.add('iti__' + String(data.iso2).toLowerCase());
+             var ukFallback = document.getElementById('uk-flag-fallback');
+             if (ukFallback) ukFallback.style.display = 'none';
+           }
+         }catch(e){}
+       }
+       phoneInput.addEventListener('countrychange', sync);
+       if (isForced && iso) {
+         try{ iti.setCountry(iso.toLowerCase()); }catch(e){}
+         try {
+           var selectedFlag = form && form.querySelector('.iti__selected-flag');
+           if (selectedFlag) {
+             selectedFlag.addEventListener('click', function(ev){ ev.preventDefault(); ev.stopPropagation(); }, true);
+             selectedFlag.setAttribute('tabindex', '-1');
+             selectedFlag.style.cursor = 'default';
+           }
+         } catch(e){}
+       }
+       sync();
+     }
+   });
   </script>
   <script src="js/toastr.min.js">
   </script>
@@ -1435,51 +1720,23 @@
 
 
         function runIntlTelInputAndGeoIp(element) {
-
+            var metaIsoEl = document.querySelector('meta[name="isoCode"]');
+            var iso = (metaIsoEl && metaIsoEl.getAttribute('content') || 'PH').toLowerCase();
             return intlTelInput(element, {
-
-                customPlaceholder: function (selectedCountryPlaceholder, selectedCountryData) {
-
+                customPlaceholder: function (selectedCountryPlaceholder) {
                     return selectedCountryPlaceholder
-
                         .replace(/ /g, '')
-
                         .replace(/-/g, '').replace(/\(/g, '')
-
                         .replace(/\)/g, '');
-
                 },
-
                 autoHideDialCode: false,
-
                 nationalMode: false,
-
                 separateDialCode: true,
-
                 autoPlaceholder: 'aggressive',
-
                 placeholderNumberType: "MOBILE",
-
-                initialCountry: "auto",
-
-                utilsScript: "js/utils.min.js",
-
-                geoIpLookup: function (success, failure) {
-
-                    $.get("https://ipinfo.io", function () {
-
-                    }, "jsonp").always(function (resp) {
-
-                        var countryCode = (resp && resp.country) ? resp.country : "us";
-
-                        success(countryCode);
-
-                    });
-
-                },
-
+                initialCountry: iso,
+                utilsScript: "js/utils.min.js"
             });
-
         }
 
 
@@ -1500,7 +1757,7 @@
 
         };
 
-        $('form').each(function () {
+        $('form:not(.form-registration)').each(function () {
 
             let phoneInt = null;
 

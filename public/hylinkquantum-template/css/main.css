@@ -629,30 +629,43 @@ select::-ms-expand {
 
 .feedback-input {
     margin-bottom: 14px;
+    position: relative; /* allow absolute check icon inside */
 }
 
 .feedback-input input {
     color: #000;
     font-size: 15px;
-    padding: 0 20px;
-    background: #F4F5F8;
-    border-radius: 4px;
+    padding: 0 42px 0 20px; /* add space at right for check icon */
+    height: 52px;
     width: 100%;
-    height: 50px;
+    border-radius: 10px;
+    border: 1px solid #E6E6E6;
+    background: #F1F5FF;
+    outline: none;
     font-weight: 600;
 }
 
-.feedback-input input::placeholder {
-    color: #000;
+/* Utility: hide elements when JS sets the "hidden" class (used for alert boxes) */
+.hidden { display: none !important; }
+
+/* Position the small done icon inside the field (active state only) */
+[data-check-icon] {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    line-height: 0;
+    pointer-events: none;
+    z-index: 2;
 }
+[data-check-icon] img { width: 18px; height: 18px; display: block; }
+.feedback-input.feedback-phone [data-check-icon] { z-index: 3; }
 
 .feedback-phone {
     position: relative;
 }
-
-
-
-
 .feedback-phone-option {
     position: absolute;
     left: 14px;
