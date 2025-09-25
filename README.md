@@ -960,6 +960,29 @@ php artisan migrate --force
 php artisan optimize
 ```
 
+### Fixing "no tracking information" errors when pulling
+
+If your remote repository uses a `main` branch but the server checkout is still on `master`, run the following commands once on that server:
+
+```bash
+# 1. Ensure working tree is clean (commit/stash anything pending)
+git status -sb
+
+# 2. Rename local branch from master -> main
+git branch -m master main
+
+# 3. Fetch latest refs from origin
+git fetch origin
+
+# 4. Link local main to origin/main for future pulls
+git branch --set-upstream-to=origin/main
+
+# 5. Pull latest changes with rebase
+git pull --rebase
+```
+
+Need a one-off pull without renaming? Run `git pull --rebase origin main` instead. Renaming and setting upstream is recommended so future `git pull --rebase` calls work without extra arguments.
+
 4) Optional: cPanel Git Version Control (push-to-deploy)
 - Create a cPanel repository (bare or working copy) under your home directory.
 - It will show a remote like: `ssh://USER@SERVER:PORT/home/USER/repositories/your-repo.git`
