@@ -14,6 +14,10 @@ return [
             'label' => 'FXDTradingAI',
             'views' => ['home', 'safe', 'redirect'],
         ],
+        'hylinkquantum-template' => [
+            'label' => 'HyLinkQuantum',
+            'views' => ['home', 'safe', 'redirect'],
+        ],
         // Add more templates here later, e.g.:
         // 'pro-template' => [
         //     'label' => 'Pro Template',
