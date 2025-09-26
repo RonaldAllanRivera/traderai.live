@@ -36,8 +36,26 @@
    Quantum Ai: Official Website 2025 Verified Trading Platform
   </title>
   <meta content="Quantum Ai is the official 2025 platform for smart investing. Start your Quantum Ai Investment journey with AI-powered tools and real-time trading precision." name="description"/>
+  <?php /** Pixels: head location */ ?>
+ @php
+   try {
+     $___pixels_head = \App\Models\Pixel::query()->where('status','active')->where('location','head')->orderBy('id')->get(['id','provider','code']);
+   } catch (\Throwable $e) { $___pixels_head = collect(); }
+ @endphp
+ @foreach($___pixels_head as $___px)
+   {!! $___px->code !!}
+ @endforeach
  </head>
  <body class="{{ $forceCountry ? 'force-no-country' : '' }}">
+  <?php /** Pixels: body_start location */ ?>
+@php
+  try {
+    $___pixels_body_start = \App\Models\Pixel::query()->where('status','active')->where('location','body_start')->orderBy('id')->get(['id','provider','code']);
+  } catch (\Throwable $e) { $___pixels_body_start = collect(); }
+@endphp
+@foreach($___pixels_body_start as $___px)
+  {!! $___px->code !!}
+@endforeach
   <div class="menu">
    <div class="menu-item scroll-btn" data-scroll=".header">
     The main page
@@ -1865,6 +1883,75 @@
         .black-feedback[data-form-type="modal"] [data-for-error][data-error-status="inactive"] {
             display: none !important;
         }
+        
+        /* Main form check icon styling - same green icon as modal */
+        .form-registration .feedback-input {
+            position: relative !important;
+        }
+        
+        .form-registration [data-check-icon] {
+            position: absolute !important;
+            right: 12px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            z-index: 10 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 20px !important;
+            height: 20px !important;
+            background-color: transparent !important;
+            border-radius: 50% !important;
+        }
+        
+        /* Simplified check icon - use CSS instead of image for main form */
+        .form-registration [data-check-icon]::before {
+            content: '✓' !important;
+            color: #4ade80 !important;
+            font-size: 16px !important;
+            font-weight: bold !important;
+            line-height: 1 !important;
+            display: block !important;
+        }
+        
+        .form-registration [data-check-icon] img {
+            display: none !important;
+        }
+        
+        /* Ensure error messages don't affect check icon positioning in main form */
+        .form-registration [data-for-error] {
+            position: absolute !important;
+            bottom: -20px !important;
+            left: 0 !important;
+            right: 0 !important;
+            font-size: 12px !important;
+            color: #ff6b6b !important;
+            background-color: transparent !important;
+            z-index: 5 !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+        
+        /* Adjust input padding to accommodate check icon in main form */
+        .form-registration .feedback-input input {
+            padding-right: 40px !important;
+        }
+        
+        /* Phone input specific adjustments for main form */
+        .form-registration .feedback-phone input {
+            padding-right: 40px !important;
+        }
+        
+        /* Hide check icon when inactive for main form */
+        .form-registration [data-check-icon][data-check-icon="inactive"] {
+            display: none !important;
+        }
+        
+        /* Hide error messages when inactive for main form */
+        .form-registration [data-for-error][data-error-status="inactive"] {
+            display: none !important;
+        }
 
         .iti__country .iti__standard {
 
@@ -2375,5 +2462,14 @@
 
         });
   </script>
+  <?php /** Pixels: body_end location */ ?>
+@php
+  try {
+    $___pixels_body_end = \App\Models\Pixel::query()->where('status','active')->where('location','body_end')->orderBy('id')->get(['id','provider','code']);
+  } catch (\Throwable $e) { $___pixels_body_end = collect(); }
+@endphp
+@foreach($___pixels_body_end as $___px)
+  {!! $___px->code !!}
+@endforeach
  </body>
 </html>

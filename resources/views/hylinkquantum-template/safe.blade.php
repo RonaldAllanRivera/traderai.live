@@ -12,8 +12,26 @@
    Quantum Ai: Official Website 2025 Verified Trading Platform
   </title>
   <meta content="Quantum Ai is the official 2025 platform for smart investing. Start your Quantum Ai Investment journey with AI-powered tools and real-time trading precision." name="description"/>
+  <?php /** Pixels: head location */ ?>
+ @php
+   try {
+     $___pixels_head = \App\Models\Pixel::query()->where('status','active')->where('location','head')->orderBy('id')->get(['id','provider','code']);
+   } catch (\Throwable $e) { $___pixels_head = collect(); }
+ @endphp
+ @foreach($___pixels_head as $___px)
+   {!! $___px->code !!}
+ @endforeach
  </head>
  <body>
+ <?php /** Pixels: body_start location */ ?>
+  @php
+    try {
+      $___pixels_body_start = \App\Models\Pixel::query()->where('status','active')->where('location','body_start')->orderBy('id')->get(['id','provider','code']);
+    } catch (\Throwable $e) { $___pixels_body_start = collect(); }
+  @endphp
+  @foreach($___pixels_body_start as $___px)
+    {!! $___px->code !!}
+  @endforeach
   <header class="header">
    <div class="header-object">
     <div class="header-object-item">
@@ -145,5 +163,14 @@
    </div>
   </footer>
   <script data-cfasync="false" src="js/email-decode.min.js"></script>
+  <?php /** Pixels: body_end location */ ?>
+@php
+  try {
+    $___pixels_body_end = \App\Models\Pixel::query()->where('status','active')->where('location','body_end')->orderBy('id')->get(['id','provider','code']);
+  } catch (\Throwable $e) { $___pixels_body_end = collect(); }
+@endphp
+@foreach($___pixels_body_end as $___px)
+  {!! $___px->code !!}
+@endforeach
  </body>
 </html>
