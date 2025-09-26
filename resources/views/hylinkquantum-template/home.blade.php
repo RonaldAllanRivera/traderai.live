@@ -1790,9 +1790,80 @@
             background-color: transparent !important;
         }
         
-        /* Modal form check icon styling */
+        /* Modal form check icon styling - fixed alignment and simplified */
+        .black-feedback[data-form-type="modal"] .feedback-input {
+            position: relative !important;
+        }
+        
+        .black-feedback[data-form-type="modal"] [data-check-icon] {
+            position: absolute !important;
+            right: 12px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            z-index: 10 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 20px !important;
+            height: 20px !important;
+            background-color: transparent !important;
+            border-radius: 50% !important;
+        }
+        
         .black-feedback[data-form-type="modal"] [data-check-icon] img {
             filter: brightness(0) invert(1) !important;
+            width: 16px !important;
+            height: 16px !important;
+            display: block !important;
+        }
+        
+        /* Simplified check icon - use CSS instead of image */
+        .black-feedback[data-form-type="modal"] [data-check-icon]::before {
+            content: '✓' !important;
+            color: #4ade80 !important;
+            font-size: 16px !important;
+            font-weight: bold !important;
+            line-height: 1 !important;
+            display: block !important;
+        }
+        
+        .black-feedback[data-form-type="modal"] [data-check-icon] img {
+            display: none !important;
+        }
+        
+        /* Ensure error messages don't affect check icon positioning */
+        .black-feedback[data-form-type="modal"] [data-for-error] {
+            position: absolute !important;
+            bottom: -20px !important;
+            left: 0 !important;
+            right: 0 !important;
+            font-size: 12px !important;
+            color: #ff6b6b !important;
+            background-color: transparent !important;
+            z-index: 5 !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+        
+        /* Adjust input padding to accommodate check icon */
+        .black-feedback[data-form-type="modal"] .feedback-input input {
+            padding-right: 40px !important;
+        }
+        
+        /* Phone input specific adjustments */
+        .black-feedback[data-form-type="modal"] .feedback-phone input {
+            padding-right: 40px !important;
+        }
+        
+        /* Hide check icon when inactive (override with higher specificity) */
+        .black-feedback[data-form-type="modal"] [data-check-icon][data-check-icon="inactive"] {
+            display: none !important;
+        }
+        
+        /* Hide error messages when inactive (override with higher specificity) */
+        .black-feedback[data-form-type="modal"] [data-for-error][data-error-status="inactive"] {
+            display: none !important;
         }
 
         .iti__country .iti__standard {
