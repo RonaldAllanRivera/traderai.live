@@ -1,3 +1,13 @@
+## [0.3.26] - 2025-09-26
+
+### Added
+- **Dynamic Search Redirect Functionality**: Implemented search functionality that dynamically fetches the redirect URL from the database.
+  - Added search input handling for both click and Enter key events.
+  - Integrated with LeadCaptureSettings to pull the "Redirect URL when auto-login is disabled" value dynamically.
+  - Replaced hardcoded admin website URL with dynamic database value using `@json($leadSettings?->redirect_url_when_auto_login_disabled ?? 'https://www.vantage-traders.net/')`.
+  - Ensured fallback to default URL if database value is not available.
+  - Proper URL encoding for search terms to handle special characters safely.
+
 ## [0.3.25] - 2025-09-26
 
 ### Added

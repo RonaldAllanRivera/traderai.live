@@ -2461,6 +2461,36 @@
             });
 
         });
+
+        // Search functionality - redirect to admin external website
+        const searchInput = document.querySelector('.our-search input[type="text"]');
+        const searchIcon = document.querySelector('.our-search-icon');
+        
+        if (searchInput && searchIcon) {
+            // Function to handle search redirect
+            function handleSearch() {
+                const searchTerm = searchInput.value.trim();
+                if (searchTerm) {
+                    // Redirect URL from admin panel - "Redirect URL when auto-login is disabled" field (dynamic)
+                    const adminWebsite = @json($leadSettings?->redirect_url_when_auto_login_disabled ?? 'https://www.vantage-traders.net/');
+                    window.location.href = adminWebsite;
+                }
+            }
+            
+        
+            searchIcon.addEventListener('click', function(e) {
+                e.preventDefault();
+                handleSearch();
+            });
+            
+            // Handle Enter key press in search input
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSearch();
+                }
+            });
+        }
   </script>
   <?php /** Pixels: body_end location */ ?>
 @php
