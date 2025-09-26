@@ -1700,7 +1700,100 @@
 
         }
 
+        /* Modal form specific styling - white country code text */
+        .black-feedback[data-form-type="modal"] .iti--separate-dial-code .iti__selected-flag {
+            color: white !important;
+        }
+        .black-feedback[data-form-type="modal"] .iti__country .iti__standard {
+            color: white !important;
+        }
+        .black-feedback[data-form-type="modal"] .iti__country {
+            color: white !important;
+        }
+        .black-feedback[data-form-type="modal"] .iti__dial-code {
+            color: white !important;
+        }
 
+        /* Modal form specific styling - remove white backgrounds and make all text white */
+        .black-feedback[data-form-type="modal"] input[type="text"],
+        .black-feedback[data-form-type="modal"] input[type="email"],
+        .black-feedback[data-form-type="modal"] input[type="tel"],
+        .black-feedback[data-form-type="modal"] input[type="password"],
+        .black-feedback[data-form-type="modal"] input[type="number"],
+        .black-feedback[data-form-type="modal"] textarea,
+        .black-feedback[data-form-type="modal"] select {
+            background-color: transparent !important;
+            background-image: none !important;
+            color: white !important;
+            border-color: rgba(255, 255, 255, 0.3) !important;
+        }
+        
+        /* Remove autofill background colors in modal form */
+        .black-feedback[data-form-type="modal"] input:-webkit-autofill,
+        .black-feedback[data-form-type="modal"] input:-webkit-autofill:hover,
+        .black-feedback[data-form-type="modal"] input:-webkit-autofill:focus,
+        .black-feedback[data-form-type="modal"] input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px transparent inset !important;
+            -webkit-text-fill-color: white !important;
+            background-color: transparent !important;
+            background-image: none !important;
+            transition: background-color 5000s ease-in-out 0s !important;
+        }
+        
+        /* Remove autofill background colors for Firefox */
+        .black-feedback[data-form-type="modal"] input:-moz-autofill,
+        .black-feedback[data-form-type="modal"] input:-moz-autofill:hover,
+        .black-feedback[data-form-type="modal"] input:-moz-autofill:focus,
+        .black-feedback[data-form-type="modal"] input:-moz-autofill:active {
+            box-shadow: 0 0 0 30px transparent inset !important;
+            -moz-text-fill-color: white !important;
+            background-color: transparent !important;
+            background-image: none !important;
+        }
+        
+        /* Modal form placeholder text styling */
+        .black-feedback[data-form-type="modal"] input::placeholder,
+        .black-feedback[data-form-type="modal"] textarea::placeholder {
+            color: rgba(255, 255, 255, 0.7) !important;
+            opacity: 1 !important;
+        }
+        
+        /* Modal form placeholder text for Firefox */
+        .black-feedback[data-form-type="modal"] input::-moz-placeholder,
+        .black-feedback[data-form-type="modal"] textarea::-moz-placeholder {
+            color: rgba(255, 255, 255, 0.7) !important;
+            opacity: 1 !important;
+        }
+        
+        /* Modal form placeholder text for Internet Explorer */
+        .black-feedback[data-form-type="modal"] input:-ms-input-placeholder,
+        .black-feedback[data-form-type="modal"] textarea:-ms-input-placeholder {
+            color: rgba(255, 255, 255, 0.7) !important;
+            opacity: 1 !important;
+        }
+        
+        /* Modal form input focus styling */
+        .black-feedback[data-form-type="modal"] input:focus,
+        .black-feedback[data-form-type="modal"] textarea:focus,
+        .black-feedback[data-form-type="modal"] select:focus {
+            background-color: transparent !important;
+            background-image: none !important;
+            color: white !important;
+            border-color: rgba(255, 255, 255, 0.6) !important;
+            outline: none !important;
+            box-shadow: none !important;
+        }
+        
+        /* Modal form error message styling */
+        .black-feedback[data-form-type="modal"] [data-for-error] {
+            color: #ff6b6b !important;
+            background-color: transparent !important;
+        }
+        
+        /* Modal form check icon styling */
+        .black-feedback[data-form-type="modal"] [data-check-icon] img {
+            filter: brightness(0) invert(1) !important;
+        }
 
         .iti__country .iti__standard {
 
@@ -1821,6 +1914,63 @@
 
      // Initialize lazy loading CAPTCHA for both forms
      initializeLazyCaptcha();
+
+     // Initialize intl-tel-input on the modal form and sync hidden fields
+     var modalForm = document.querySelector('form.black-feedback[data-form-type="modal"]');
+     var modalPhoneInput = modalForm && modalForm.querySelector('input.phone');
+     var modalHiddenDial = modalForm && modalForm.querySelector('input.area_code');
+     var modalHiddenIso = modalForm && modalForm.querySelector('input[name="country"]');
+     var modalNoticeCountry = document.getElementById('notice-country-modal');
+     var modalNoticeFlag = document.getElementById('notice-flag-modal');
+     var modalIso = (document.querySelector('meta[name="isoCode"]').getAttribute('content') || '').toUpperCase();
+     var modalIsForced = (document.querySelector('meta[name="forceCountry"]').getAttribute('content') === '1');
+     
+     if (modalPhoneInput && window.intlTelInput) {
+       var modalIti = window.intlTelInput(modalPhoneInput, {
+         initialCountry: modalIso ? modalIso.toLowerCase() : undefined,
+         separateDialCode: true,
+         nationalMode: true,
+         autoPlaceholder: 'polite'
+       });
+       
+       function modalPrettyName(code){
+         var map = { 'PH':'Philippines','US':'United States','SG':'Singapore','GB':'United Kingdom','AE':'United Arab Emirates','IN':'India','BE':'Belgium','FR':'France','DE':'Germany','NL':'Netherlands','ES':'Spain','IT':'Italy','SE':'Sweden','NO':'Norway','DK':'Denmark','FI':'Finland','PL':'Poland','IE':'Ireland','PT':'Portugal','RO':'Romania','HU':'Hungary','GR':'Greece','BG':'Bulgaria','AT':'Austria','CH':'Switzerland','AU':'Australia','NZ':'New Zealand','MX':'Mexico','BR':'Brazil','AR':'Argentina','CL':'Chile','CO':'Colombia','ZA':'South Africa','NG':'Nigeria','EG':'Egypt','JP':'Japan','KR':'South Korea','MY':'Malaysia','ID':'Indonesia','TH':'Thailand','VN':'Vietnam','TR':'Turkey','SA':'Saudi Arabia','CA':'Canada','IL':'Israel' };
+         try { if (window.Intl && typeof Intl.DisplayNames==='function'){ var dn=new Intl.DisplayNames(['en'],{type:'region'}); return dn.of(code) || map[code] || code; } } catch(e){}
+         return map[code] || code;
+       }
+       
+       function modalSync(){
+         try{
+           var data = modalIti.getSelectedCountryData();
+           if (modalHiddenDial && data && data.dialCode) modalHiddenDial.value = String(data.dialCode);
+           if (modalHiddenIso && data && data.iso2) modalHiddenIso.value = String(data.iso2).toUpperCase();
+           if (modalNoticeCountry && data && data.iso2) modalNoticeCountry.textContent = modalPrettyName(String(data.iso2).toUpperCase());
+           if (modalNoticeFlag && data && data.iso2) {
+             modalNoticeFlag.style.display = 'inline-block';
+             Array.from(modalNoticeFlag.classList).forEach(function(c){ if (c.indexOf('iti__')===0 && c!=='iti__flag') modalNoticeFlag.classList.remove(c); });
+             modalNoticeFlag.classList.add('iti__' + String(data.iso2).toLowerCase());
+             var ukFallback = document.getElementById('uk-flag-fallback-modal');
+             if (ukFallback) ukFallback.style.display = 'none';
+           }
+         }catch(e){}
+       }
+       
+       modalPhoneInput.addEventListener('countrychange', modalSync);
+       
+       if (modalIsForced && modalIso) {
+         try{ modalIti.setCountry(modalIso.toLowerCase()); }catch(e){}
+         try {
+           var modalSelectedFlag = modalForm && modalForm.querySelector('.iti__selected-flag');
+           if (modalSelectedFlag) {
+             modalSelectedFlag.addEventListener('click', function(ev){ ev.preventDefault(); ev.stopPropagation(); }, true);
+             modalSelectedFlag.setAttribute('tabindex', '-1');
+             modalSelectedFlag.style.cursor = 'default';
+           }
+         } catch(e){}
+       }
+       
+       modalSync();
+     }
    });
   </script>
   <script src="js/toastr.min.js">

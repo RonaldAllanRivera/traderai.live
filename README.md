@@ -1163,7 +1163,7 @@ This phase integrates third-party tracking scripts.
 This phase covers final touches and feature parity with the original static template.
 
 1.  **Modify Logo**:
-    *   Edit the logo image file in `public/{template}/img/` to add any required text like "by Vintage Trader".
+    *   Edit the logo image file in `public/{template}/img/` to add any required text like "by Vantage Trader".
 
 2.  **Add Links**:
     *   If the design has a title or CTA that should link to the final redirect URL, add an `<a>` tag pointing to the URL configured in **Admin → System → Lead Capture**.
