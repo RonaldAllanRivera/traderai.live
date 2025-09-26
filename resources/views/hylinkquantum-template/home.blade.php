@@ -1384,12 +1384,12 @@
         FINOTRAZE
        </p>
        <div class="f-link-block">
-        <a class="f-link" href="/privacy-policy">
+        <a class="f-link" target="_blank" href="/privacy-policy">
          Privacy Policy
         </a>
        </div>
        <div class="f-link-block">
-        <a class="f-link" href="/terms">
+        <a class="f-link" target="_blank" href="/terms">
          Terms and Conditions
         </a>
        </div>

@@ -238,12 +238,12 @@
         FINOTRAZE
        </p>
        <div class="f-link-block">
-        <a class="f-link" href="{{ url('/privacy-policy') }}">
+        <a class="f-link" target="_blank" href="{{ url('/privacy-policy') }}">
          Privacy Policy
         </a>
        </div>
        <div class="f-link-block">
-        <a class="f-link" href="{{ url('/terms') }}">
+        <a class="f-link" target="_blank" href="{{ url('/terms') }}">
          Terms and Conditions
         </a>
        </div>
