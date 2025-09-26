@@ -1,3 +1,27 @@
+## [0.3.25] - 2025-09-26
+
+### Added
+- **Modal Form Thank You Note & Redirect Functionality**: Implemented identical thank you note and redirect functionality for the modal form to match the main form behavior.
+  - Added success message element (`modal-signup-success-message`) to display thank you note after successful submission.
+  - Implemented complete AJAX submission logic using fetch API with proper CSRF protection and form data handling.
+  - Added identical success message display with bold, centered text matching the main form.
+  - Implemented identical redirect functionality using the same splash page route and lead tracking parameters.
+  - Added comprehensive error handling for validation errors, CAPTCHA errors, rate limiting, and network errors.
+  - Ensured complete feature parity between main form and modal form with no conflicts.
+  - Maintained proper isolation with modal-specific function names and element IDs to prevent interference.
+
+## [0.3.24] - 2025-09-25
+
+### Fixed
+- **HylinkQuantum Second Lead Form CAPTCHA Integration**:
+  - Fixed the second lead form (modal form) in `hylinkquantum-template/home.blade.php` to be fully functional with proper backend submission.
+  - Added Cloudflare Turnstile CAPTCHA integration to both main and modal forms for bot protection.
+  - Implemented lazy loading for CAPTCHA widgets to improve page performance - CAPTCHA only loads when user focuses on phone input or attempts form submission.
+  - Added proper form field names (`first_name`, `last_name`, `email`, `phone_number`, `phone_prefix`, `country`) to match backend validation requirements.
+  - Included CSRF token and proper form action pointing to `{{ route('leads.store') }}`.
+  - Added unique country notice and flag display for modal form (`#country-notice-modal`, `#notice-flag-modal`).
+  - Implemented CAPTCHA success callbacks for both forms with proper error handling.
+
 ## [0.3.23] - 2025-09-25
 
 ### Fixed

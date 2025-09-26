@@ -172,7 +172,7 @@
          </div>
         </div>
         @if(config('services.turnstile.enabled') && config('services.turnstile.site_key'))
-        <div class="feedback-mob-row" id="captcha-block">
+        <div class="feedback-mob-row captcha-container-main" id="captcha-block" style="display: none;">
           <div class="form-group" style="width:100%">
             <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.site_key') }}" data-theme="light"></div>
             <div data-error-status="inactive" data-for-error="captcha">Please verify that you are human.</div>
@@ -921,23 +921,66 @@
         <div class="quiz-five-close">
          <img alt="image" src="img/modal-close.png"/>
         </div>
-        <form action="#" class="black-feedback">
+        <form action="{{ route('leads.store') }}" class="black-feedback" data-form-type="modal" method="post">
+         @csrf
          <div class="quiz-row">
           <div class="feedback-input">
-           <input name="firstname" placeholder="Enter your firstname" required="" type="text"/>
+           <input name="first_name" placeholder="Enter your firstname" required="" type="text" value=""/>
+           <div data-error-status="inactive" data-for-error="first_name">Your first name is too short (at least 2 characters)</div>
+           <span data-check-icon="inactive" data-check-icon-for="first_name"><img alt="✔" loading="lazy" src="img/done-icon.png"/></span>
           </div>
           <div class="feedback-input">
-           <input name="lastname" placeholder="Enter your lastname" required="" type="text"/>
+           <input name="last_name" placeholder="Enter your lastname" required="" type="text" value=""/>
+           <div data-error-status="inactive" data-for-error="last_name">Your last name is too short (at least 2 characters)</div>
+           <span data-check-icon="inactive" data-check-icon-for="last_name"><img alt="✔" loading="lazy" src="img/done-icon.png"/></span>
           </div>
          </div>
          <div class="quiz-row">
           <div class="feedback-input">
-           <input name="email" placeholder="Enter e-mail address" required="" type="email"/>
+           <input name="email" placeholder="Enter e-mail address" required="" type="email" value=""/>
+           <div data-error-status="inactive" data-for-error="email">Please enter a valid email address.</div>
+           <span data-check-icon="inactive" data-check-icon-for="email"><img alt="✔" loading="lazy" src="img/done-icon.png"/></span>
           </div>
           <div class="feedback-input feedback-phone">
-           <input name="phone" placeholder="Your phone" required="" type="tel"/>
+           <input class="area_code" name="phone_prefix" required="" type="hidden" value="{{ $preDial }}"/>
+           <input name="country" type="hidden" value="{{ $computedIso }}"/>
+           <input class="phone" name="phone_number" placeholder="Your phone" required="" type="tel" data-force-country="{{ $forceCountry ? '1' : '0' }}"/>
+           <div data-error-status="inactive" data-for-error="phone">Please enter a valid phone number.</div>
+           <span data-check-icon="inactive" data-check-icon-for="phone"><img alt="✔" loading="lazy" src="img/done-icon.png"/></span>
           </div>
          </div>
+         <!-- Country notice for modal form -->
+         <div class="mt-1 text-xs text-white flex items-center gap-1" id="country-notice-modal">
+          <span>
+           Currently only 
+           <span class="inline-flex items-center">
+             <span class="iti__flag" id="notice-flag-modal" style="display: none;"></span>
+             <!-- UK Flag SVG Fallback -->
+             @if($computedIso === 'GB')
+             <svg id="uk-flag-fallback-modal" width="20" height="15" viewBox="0 0 60 30" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
+               <clipPath id="a-modal"><path d="M0 0v30h60V0z"/></clipPath>
+               <clipPath id="b-modal"><path d="M30 15h30v15zv15H0zH0V0zV0h30z"/></clipPath>
+               <g clip-path="url(#a-modal)">
+                 <path d="M0 0v30h60V0z" fill="#012169"/>
+                 <path d="M0 0l60 30m0-30L0 30" stroke="#fff" stroke-width="6"/>
+                 <path d="M0 0l60 30m0-30L0 30" clip-path="url(#b-modal)" stroke="#C8102E" stroke-width="4"/>
+                 <path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/>
+                 <path d="M30 0v30M0 15h60" stroke="#C8102E" stroke-width="6"/>
+               </g>
+             </svg>
+             @endif
+           </span>
+           <span id="notice-country-modal">{{ $computedIso === 'GB' ? 'United Kingdom' : $computedIso }}</span> Nationals can register.
+          </span>
+         </div>
+         @if(config('services.turnstile.enabled') && config('services.turnstile.site_key'))
+         <div class="quiz-row captcha-container-modal" id="captcha-block-modal" style="display: none;">
+          <div class="form-group" style="width:100%">
+            <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.site_key') }}" data-theme="light"></div>
+            <div data-error-status="inactive" data-for-error="captcha">Please verify that you are human.</div>
+          </div>
+         </div>
+         @endif
          <div class="quiz-row">
           <div class="feedback-row">
            <label class="feedback-check" for="feedback-checkbox3">
@@ -948,9 +991,7 @@
             <p class="feedback-row-slogan-item">
              Agree
              <a class="modal-btn" data-modal="#modal-third" href="/privacy-policy">
-              Privacy
-
-                                                    policy
+              Privacy policy
              </a>
             </p>
            </div>
@@ -968,6 +1009,7 @@
           </div>
          </div>
          <input class="quiz-btn-item last deactivated" type="submit" value="Open the free account"/>
+        <div class="alert alert-success font-bold hidden" id="modal-signup-success-message" role="alert" style="margin-top:12px; text-align:center;"></div>
         </form>
        </div>
       </div>
@@ -1548,6 +1590,77 @@
       .catch(function(){ showAlert('Submission failed. Please try again.'); btn && (btn.disabled = false); if (successEl){ successEl.classList.add('hidden'); } });
     });
    })();
+
+   // Modal form validation (identical to main form)
+   (function(){
+     var modalForm = document.querySelector('form.black-feedback');
+     if (!modalForm) return;
+
+     var modalEl = {
+       email: modalForm.querySelector('input[name="email"]'),
+       phone: modalForm.querySelector('input[name="phone_number"]'),
+       area: modalForm.querySelector('input[name="phone_prefix"]'),
+       alert: modalForm.querySelector('.alert.alert-danger'),
+     };
+
+     function showModalAlert(msg){
+       if(!modalEl.alert){
+         // Create a lightweight inline alert if not present
+         var a = document.createElement('div'); a.className = 'alert alert-danger'; a.style.marginTop = '8px';
+         modalForm.insertBefore(a, modalForm.firstChild); modalEl.alert = a;
+       }
+       modalEl.alert.textContent = msg; modalEl.alert.classList.remove('hidden'); modalEl.alert.setAttribute('role','alert');
+     }
+     function hideModalAlert(){ if(!modalEl.alert) return; modalEl.alert.textContent = ''; modalEl.alert.classList.add('hidden'); }
+
+     function setModalCheckIcon(name, active){ var c = modalForm.querySelector('[data-check-icon-for="'+name+'"][data-check-icon]'); if (c){ c.setAttribute('data-check-icon', active ? 'active' : 'inactive'); } }
+     function setModalError(name, message){ var eEl = modalForm.querySelector('[data-for-error="'+name+'"][data-error-status]'); if (eEl){ eEl.setAttribute('data-error-status','active'); eEl.style.display='block'; if(message){ eEl.textContent = message; } } setModalCheckIcon(name, false); }
+     function clearModalError(name){ var eEl = modalForm.querySelector('[data-for-error="'+name+'"][data-error-status]'); if (eEl){ eEl.setAttribute('data-error-status','inactive'); eEl.style.display='none'; } setModalCheckIcon(name, true); }
+
+     function modalDebounce(fn, wait){ var t; return function(){ var args = arguments, ctx = this; clearTimeout(t); t = setTimeout(function(){ fn.apply(ctx, args); }, wait); }; }
+
+     function validateModalEmail(opts){ var silent = opts && opts.silent; if(!modalEl.email) return true; var v = (modalEl.email.value||'').trim(); var ok = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v); if (ok) { clearModalError('email'); } else { if (silent) setModalCheckIcon('email', false); else setModalError('email','Please enter a valid email address.'); } return ok; }
+
+     function getModalActiveIso(){ var metaEl = document.querySelector('meta[name="isoCode"]'); return (metaEl && metaEl.getAttribute('content') || '').toUpperCase(); }
+
+     function validateModalPhone(opts){ var silent = opts && opts.silent; if(!modalEl.phone) return true; var v = String(modalEl.phone.value||''); var digits = v.replace(/\D/g,''); var iso = getModalActiveIso(); var ok; switch(iso){ case 'GB': ok = /^(0?7\d{9})$/.test(digits); break; case 'US': ok = /^\d{10}$/.test(digits); break; case 'IL': ok = /^(0?5\d{8})$/.test(digits); break; case 'AE': ok = /^(0?5\d{7,8})$/.test(digits); break; default: ok = digits.length >= 6 && digits.length <= 14; } if (ok) { clearModalError('phone'); } else { if (silent) setModalCheckIcon('phone', false); else setModalError('phone','Please enter a valid phone number.'); } return ok; }
+
+     modalEl.email && modalEl.email.addEventListener('blur', function(){ hideModalAlert(); validateModalEmail({silent:false}); });
+     modalEl.phone && modalEl.phone.addEventListener('blur', function(){ hideModalAlert(); validateModalPhone({silent:false}); });
+     modalEl.email && modalEl.email.addEventListener('input', modalDebounce(function(){ validateModalEmail({silent:true}); }, 200));
+     modalEl.phone && modalEl.phone.addEventListener('input', modalDebounce(function(){ validateModalPhone({silent:true}); }, 200));
+
+     modalForm.addEventListener('submit', function(ev){
+      hideModalAlert();
+      var okE = validateModalEmail({silent:false});
+      var okP = validateModalPhone({silent:false});
+      if (!(okE && okP)) { ev.preventDefault(); showModalAlert(!okE ? 'Invalid email address.' : 'Invalid phone number.'); return; }
+
+      // Check CAPTCHA for modal form
+      var captchaBlock = document.getElementById('captcha-block-modal');
+      if (captchaBlock) {
+        var captchaResponse = modalForm.querySelector('input[name="cf-turnstile-response"]');
+        if (!captchaResponse || !captchaResponse.value) {
+          ev.preventDefault();
+          setModalError('captcha', 'Please verify that you are human.');
+          showModalAlert('Please complete the CAPTCHA verification.');
+          return;
+        }
+      }
+
+      ev.preventDefault();
+      var btn = modalForm.querySelector('button[type="submit"], input[type="submit"]'); btn && (btn.disabled = true);
+      var successEl = document.getElementById('modal-signup-success-message'); if (successEl) { successEl.classList.add('hidden'); successEl.textContent = 'Submitting…'; }
+
+      var fd = new FormData(modalForm);
+      var token = modalForm.querySelector('input[name="_token"]')?.value || '';
+      fetch(modalForm.action, { method: 'POST', headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': token }, body: fd, credentials: 'same-origin' })
+      .then(async function(r){ if (!r.ok) { var text = ''; try { text = await r.text(); } catch(e){} try { var payload = text ? JSON.parse(text) : null; if (r.status === 422 && payload && payload.errors) { var handled = false; if (payload.errors.email) { setModalError('email', payload.errors.email[0] || ''); handled = true; } if (payload.errors.phone_number || payload.errors.phone) { var msg = (payload.errors.phone_number && payload.errors.phone_number[0]) || (payload.errors.phone && payload.errors.phone[0]) || ''; setModalError('phone', msg || 'Please enter a valid phone number.'); setModalCheckIcon('phone', false); handled = true; } if (payload.errors['cf-turnstile-response']) { var cmsg = payload.errors['cf-turnstile-response'][0] || 'Please verify that you are human.'; setModalError('captcha', cmsg); try { if (window.turnstile && typeof window.turnstile.reset === 'function') { window.turnstile.reset(); } } catch(e){} handled = true; } if (!handled) { var firstKey = Object.keys(payload.errors)[0]; var firstMsg = firstKey ? (payload.errors[firstKey][0] || '') : ''; showModalAlert(firstMsg || 'Please check your input and try again.'); } btn && (btn.disabled = false); if (successEl){ successEl.classList.add('hidden'); } return Promise.reject(); } if (r.status === 429) { showModalAlert('Too many attempts. Please wait a moment and try again.'); btn && (btn.disabled = false); if (successEl){ successEl.classList.add('hidden'); } return Promise.reject(); } showModalAlert('Submission failed. Please try again.'); btn && (btn.disabled = false); if (successEl){ successEl.classList.add('hidden'); } return Promise.reject(); } catch(e) { showModalAlert('Submission failed. Please try again.'); btn && (btn.disabled = false); if (successEl){ successEl.classList.add('hidden'); } return Promise.reject(); } } return r.json(); })
+      .then(function(data){ if (successEl){ successEl.innerHTML = "Thank you for sharing your information with us!<br>Our team truly appreciates the time you took, and we'll be reaching out within 48 hours to assist you further."; successEl.style.fontWeight = '700'; successEl.style.textAlign = 'center'; successEl.classList.remove('hidden'); }
+        var target = data && data.redirect; if (target) { var splash = "{{ route('redirect') }}"; var leadId = data && data.lead_id ? String(data.lead_id) : ''; var url = splash + '?to=' + encodeURIComponent(String(target)) + '&s=5' + (leadId ? ('&lead_id=' + encodeURIComponent(leadId)) : ''); window.location.href = url; } })
+      .catch(function(){ showModalAlert('Submission failed. Please try again.'); btn && (btn.disabled = false); if (successEl){ successEl.classList.add('hidden'); } });
+     });
+   })();
   </script>
   <script src="js/jquery-3.6.0.min.js">
   </script>
@@ -1705,6 +1818,9 @@
        }
        sync();
      }
+
+     // Initialize lazy loading CAPTCHA for both forms
+     initializeLazyCaptcha();
    });
   </script>
   <script src="js/toastr.min.js">
@@ -1717,7 +1833,122 @@
 
         });
 
+        // Lazy loading CAPTCHA functionality
+        function initializeLazyCaptcha() {
+          // Main form CAPTCHA - load when phone input is focused
+          var mainPhoneInput = document.querySelector('form.form-registration input.phone');
+          if (mainPhoneInput) {
+            mainPhoneInput.addEventListener('focus', function() {
+              setTimeout(function() {
+                loadCaptcha('main');
+              }, 100);
+            }, { once: true });
+          }
 
+          // Modal form CAPTCHA - load when phone input is focused
+          var modalPhoneInput = document.querySelector('form.black-feedback input.phone');
+          if (modalPhoneInput) {
+            modalPhoneInput.addEventListener('focus', function() {
+              setTimeout(function() {
+                loadCaptcha('modal');
+              }, 100);
+            }, { once: true });
+          }
+
+          // Fallback: load CAPTCHA when form is about to be submitted
+          document.querySelectorAll('form').forEach(function(form) {
+            form.addEventListener('submit', function(e) {
+              var formType = form.getAttribute('data-form-type') || 'main';
+              var captchaBlock = document.getElementById('captcha-block' + (formType === 'modal' ? '-modal' : ''));
+              
+              if (captchaBlock && captchaBlock.dataset.captchaLoaded !== 'true') {
+                e.preventDefault();
+                loadCaptcha(formType);
+                
+                // Wait for CAPTCHA to load before submitting
+                var maxWaitTime = 5000; // 5 seconds max wait
+                var startTime = Date.now();
+                
+                var checkCaptchaLoaded = setInterval(function() {
+                  if (captchaBlock.dataset.captchaLoaded === 'true' || Date.now() - startTime > maxWaitTime) {
+                    clearInterval(checkCaptchaLoaded);
+                    form.submit();
+                  }
+                }, 100);
+              }
+            });
+          });
+        }
+
+        // Load CAPTCHA for specific form type
+        function loadCaptcha(formType) {
+          var containerId = formType === 'modal' ? 'captcha-block-modal' : 'captcha-block';
+          var captchaBlock = document.getElementById(containerId);
+          
+          if (captchaBlock && typeof turnstile !== 'undefined') {
+            // Check if CAPTCHA is already loaded or being loaded
+            if (captchaBlock.dataset.captchaLoaded === 'true') {
+              return; // Already loaded, skip
+            }
+            
+            captchaBlock.style.display = 'block';
+            captchaBlock.dataset.captchaLoaded = 'true';
+            
+            // Find the turnstile container and render it
+            var turnstileContainer = captchaBlock.querySelector('.cf-turnstile');
+            if (turnstileContainer) {
+              // Clear any existing content to prevent duplicates
+              turnstileContainer.innerHTML = '';
+              
+              turnstile.render(turnstileContainer, {
+                sitekey: turnstileContainer.getAttribute('data-sitekey'),
+                theme: turnstileContainer.getAttribute('data-theme') || 'light',
+                callback: window['onCaptchaSuccess' + (formType.charAt(0).toUpperCase() + formType.slice(1))]
+              });
+            }
+          }
+        }
+
+        // CAPTCHA success callbacks
+        window.onCaptchaSuccessMain = function(token) {
+          try {
+            console.log('Main form CAPTCHA verified');
+            // Store token in hidden field if needed
+            var mainForm = document.querySelector('form.form-registration');
+            if (mainForm) {
+              var hiddenInput = mainForm.querySelector('input[name="cf-turnstile-response"]');
+              if (!hiddenInput) {
+                hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'cf-turnstile-response';
+                mainForm.appendChild(hiddenInput);
+              }
+              hiddenInput.value = token;
+            }
+          } catch (error) {
+            console.error('Main form CAPTCHA callback error:', error);
+          }
+        };
+
+        window.onCaptchaSuccessModal = function(token) {
+          try {
+            console.log('Modal form CAPTCHA verified');
+            // Store token in hidden field if needed
+            var modalForm = document.querySelector('form.black-feedback');
+            if (modalForm) {
+              var hiddenInput = modalForm.querySelector('input[name="cf-turnstile-response"]');
+              if (!hiddenInput) {
+                hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'cf-turnstile-response';
+                modalForm.appendChild(hiddenInput);
+              }
+              hiddenInput.value = token;
+            }
+          } catch (error) {
+            console.error('Modal form CAPTCHA callback error:', error);
+          }
+        };
 
         function runIntlTelInputAndGeoIp(element) {
             var metaIsoEl = document.querySelector('meta[name="isoCode"]');
@@ -1757,7 +1988,7 @@
 
         };
 
-        $('form:not(.form-registration)').each(function () {
+        $('form:not(.form-registration):not(.black-feedback)').each(function () {
 
             let phoneInt = null;
 

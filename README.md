@@ -9,7 +9,11 @@ The system is engineered for scalability and flexibility, allowing administrator
 *   **Dynamic Multi-Template Frontend**: A modular architecture where the entire public website (Blade templates and assets) can be switched on-the-fly from the admin panel. This allows for rapid A/B testing and rebranding without redeployment.
 *   **Advanced Lead Management System**:
     *   Robust lead capture forms with server-side validation using `giggsey/libphonenumber-for-php` for global phone number accuracy.
+    *   **Dual Form System**: Both main page form and modal form provide identical user experiences with complete feature parity.
     *   Seamless AJAX form submission with a clean redirect flow and inline validation messages.
+    *   **Identical Success Handling**: Both forms display the same thank you message and redirect to the same splash page with lead tracking parameters.
+    *   **Comprehensive Error Handling**: Identical validation, CAPTCHA, rate limiting, and network error handling across both forms.
+    *   **Conflict-Free Implementation**: Modal form operates independently with properly scoped functions and element IDs to avoid conflicts with the main form.
     *   Integrated CSV export for leads, optimized for large datasets with streaming downloads.
 *   **Sophisticated Geo-Targeting & Phone Logic**:
     *   Server-side country resolution middleware that detects a visitor's location via CDN headers (e.g., Cloudflare's `CF-IPCountry`) or IP lookup APIs.
@@ -1245,3 +1249,42 @@ Lead forms include Cloudflare Turnstile to prevent automated submissions. The wi
     - `composer require filament/tables:^4 filament/actions:^4 filament/forms:^4 filament/support:^4`
   - In v4, row/bulk actions come from `Filament\\Actions`, not `Filament\\Tables\\Actions`.
   - Clear caches: `composer dump-autoload -o && php artisan optimize:clear`.
+
+## HylinkQuantum Template Fixes
+
+The HylinkQuantum template has been enhanced to match the functionality and user experience of the FXDTradingAI template, with particular attention to form validation, country handling, and bot protection.
+
+### Country Flag and Validation Fixes
+
+- **Fixed Country Flag Display**: Switched from local `intl-tel-input` CSS to CDN version to ensure proper sprite mapping and correct flag display.
+- **Country Notice UI**: Implemented proper country notice display with `#country-notice` div, `#notice-flag` span, and `#notice-country` span to match FXDTradingAI template behavior.
+- **Validation Success/Error Messages**: Fixed display of validation messages by adding `.hidden` utility class to CSS and ensuring alert containers are properly styled.
+- **Checkmark Positioning**: Positioned `done-icon.png` checkmarks correctly inside text fields after successful validation by updating CSS positioning rules.
+- **Priority Country Enforcement**: Disabled country code dropdown when Priority Country is enforced by adding click/focus blocking on `.iti__selected-flag` and CSS rules to hide dropdown elements.
+
+### Second Lead Form (Modal Form) CAPTCHA Integration
+
+- **Form Functionality**: Fixed the second lead form (modal form) to be fully functional with proper backend submission to `{{ route('leads.store') }}`.
+- **CAPTCHA Protection**: Added Cloudflare Turnstile CAPTCHA integration to both main and modal forms for bot protection.
+- **Lazy Loading**: Implemented lazy loading for CAPTCHA widgets to improve page performance - CAPTCHA only loads when user focuses on phone input or attempts form submission.
+- **Form Field Names**: Added proper form field names (`first_name`, `last_name`, `email`, `phone_number`, `phone_prefix`, `country`) to match backend validation requirements.
+- **CSRF Protection**: Included CSRF token and proper form action pointing to the leads store route.
+- **Modal Country Notice**: Added unique country notice and flag display for modal form (`#country-notice-modal`, `#notice-flag-modal`).
+
+### CAPTCHA Lazy Loading Implementation
+
+The CAPTCHA implementation uses a performance-optimized approach:
+
+- **Trigger-based Loading**: CAPTCHA widgets are only loaded when needed (phone input focus or form submission attempt)
+- **Fallback Mechanism**: If user submits form before CAPTCHA loads, the submission is delayed, CAPTCHA is loaded, and then form is automatically submitted
+- **Multiple Form Support**: Separate CAPTCHA instances and callbacks for main form (`onCaptchaSuccessMain`) and modal form (`onCaptchaSuccessModal`)
+- **Error Handling**: Proper error handling and console logging for debugging
+
+### Testing Recommendations
+
+1. **Country Flag Display**: Test with different countries to ensure flags display correctly
+2. **Priority Country Mode**: Enable Priority Country in admin and verify country picker is disabled
+3. **Form Validation**: Test both successful validation (green checkmarks) and error states (red error messages)
+4. **CAPTCHA Functionality**: Test both forms to ensure CAPTCHA loads properly and validates successfully
+5. **Lazy Loading**: Verify CAPTCHA only loads when phone input is focused or form is submitted
+6. **Modal Form**: Test the modal form separately to ensure all functionality works correctly
